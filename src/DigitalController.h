@@ -1,12 +1,12 @@
 // ----------------------------------------------------------------------------
-// RecursivePwmController.h
+// DigitalController.h
 //
 //
 // Authors:
 // Peter Polidoro peterpolidoro@gmail.com
 // ----------------------------------------------------------------------------
-#ifndef RECURSIVE_PWM_CONTROLLER_H
-#define RECURSIVE_PWM_CONTROLLER_H
+#ifndef DIGITAL_CONTROLLER_H
+#define DIGITAL_CONTROLLER_H
 #include <ArduinoJson.h>
 #include <JsonStream.h>
 #include <Array.h>
@@ -20,14 +20,14 @@
 #include <ModularServer.h>
 #include <ModularDeviceBase.h>
 
-#include "RecursivePwmController/Constants.h"
+#include "DigitalController/Constants.h"
 
 
-class RecursivePwmController : public ModularDeviceBase
+class DigitalController : public ModularDeviceBase
 {
 public:
-  RecursivePwmController();
-  ~RecursivePwmController();
+  DigitalController();
+  ~DigitalController();
   virtual void setup();
 
   void enableAll();
@@ -71,7 +71,7 @@ public:
     long period,
     long on_duration);
 
-  typedef Array<long,recursive_pwm_controller::constants::PWM_LEVEL_COUNT_MAX> RecursivePwmValues;
+  typedef Array<long,digital_controller::constants::PWM_LEVEL_COUNT_MAX> RecursivePwmValues;
 
   int addRecursivePwm(uint32_t channels,
     long delay,
@@ -94,7 +94,7 @@ public:
     uint32_t delay,
     int arg=-1);
 
-  typedef Array<RecursivePwmValues,recursive_pwm_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
+  typedef Array<RecursivePwmValues,digital_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
   ChannelsPwmIndexes getChannelsPwmIndexes();
 
   uint32_t arrayToChannels(ArduinoJson::JsonArray & channels_array);
@@ -104,22 +104,27 @@ public:
   virtual void startPwmHandler(int pwm_index);
   virtual void stopPwmHandler(int pwm_index);
 
+protected:
+
+  // Handlers
+  void setChannelCountHandler();
+
 private:
-  modular_server::Property properties_[recursive_pwm_controller::constants::PROPERTY_COUNT_MAX];
-  modular_server::Parameter parameters_[recursive_pwm_controller::constants::PARAMETER_COUNT_MAX];
-  modular_server::Function functions_[recursive_pwm_controller::constants::FUNCTION_COUNT_MAX];
-  modular_server::Callback callbacks_[recursive_pwm_controller::constants::CALLBACK_COUNT_MAX];
+  modular_server::Property properties_[digital_controller::constants::PROPERTY_COUNT_MAX];
+  modular_server::Parameter parameters_[digital_controller::constants::PARAMETER_COUNT_MAX];
+  modular_server::Function functions_[digital_controller::constants::FUNCTION_COUNT_MAX];
+  modular_server::Callback callbacks_[digital_controller::constants::CALLBACK_COUNT_MAX];
 
   bool enabled_;
   uint32_t channels_;
-  long powers_when_on_[recursive_pwm_controller::constants::CHANNEL_COUNT_MAX];
-  long powers_[recursive_pwm_controller::constants::CHANNEL_COUNT_MAX];
-  long channels_pwm_indexes_[recursive_pwm_controller::constants::CHANNEL_COUNT_MAX][recursive_pwm_controller::constants::PWM_LEVEL_COUNT_MAX];
+  long powers_when_on_[digital_controller::constants::CHANNEL_COUNT_MAX];
+  long powers_[digital_controller::constants::CHANNEL_COUNT_MAX];
+  long channels_pwm_indexes_[digital_controller::constants::CHANNEL_COUNT_MAX][digital_controller::constants::PWM_LEVEL_COUNT_MAX];
 
-  EventController<recursive_pwm_controller::constants::EVENT_COUNT_MAX> event_controller_;
+  EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
-  IndexedContainer<recursive_pwm_controller::constants::PwmInfo,
-    recursive_pwm_controller::constants::INDEXED_PWM_COUNT_MAX> indexed_pwm_;
+  IndexedContainer<digital_controller::constants::PwmInfo,
+    digital_controller::constants::INDEXED_PWM_COUNT_MAX> indexed_pwm_;
 
   const Functor1<int> functor_dummy_;
 

@@ -5,19 +5,19 @@
 // Authors:
 // Peter Polidoro peterpolidoro@gmail.com
 // ----------------------------------------------------------------------------
-#ifndef RECURSIVE_PWM_CONTROLLER_5X3_CONSTANTS_H
-#define RECURSIVE_PWM_CONTROLLER_5X3_CONSTANTS_H
+#ifndef DIGITAL_CONTROLLER_5X3_CONSTANTS_H
+#define DIGITAL_CONTROLLER_5X3_CONSTANTS_H
 #include "Constants.h"
 
 
 #if defined(__MK64FX512__)
 
-namespace recursive_pwm_controller
+namespace digital_controller
 {
 namespace constants
 {
 //MAX values must be >= 1, >= created/copied count, < RAM limit
-enum {CHANNEL_COUNT_MAX=8};
+enum {CHANNEL_COUNT_MAX=32};
 
 enum{EVENT_COUNT_MAX=36};
 enum{INDEXED_PWM_COUNT_MAX=16};

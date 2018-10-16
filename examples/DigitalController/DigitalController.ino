@@ -1,7 +1,7 @@
-#include <RecursivePwmController.h>
+#include <DigitalController.h>
 
 
-RecursivePwmController dev;
+DigitalController dev;
 
 void setup()
 {

@@ -8,20 +8,20 @@
 #include "Constants.h"
 
 
-namespace recursive_pwm_controller
+namespace digital_controller
 {
 namespace constants
 {
-CONSTANT_STRING(device_name,"recursive_pwm_controller");
+CONSTANT_STRING(device_name,"digital_controller");
 
-CONSTANT_STRING(firmware_name,"RecursivePwmController");
+CONSTANT_STRING(firmware_name,"DigitalController");
 // Use semantic versioning http://semver.org/
 const modular_server::FirmwareInfo firmware_info =
 {
   .name_ptr=&firmware_name,
   .version_major=1,
   .version_minor=0,
-  .version_patch=4,
+  .version_patch=0,
 };
 
 const long analog_write_min = 0;
@@ -44,10 +44,14 @@ CONSTANT_STRING(ms_units,"ms");
 CONSTANT_STRING(percent_units,"%");
 
 // Properties
+CONSTANT_STRING(channel_count_property_name,"channelCount");
+const long channel_count_min = 1;
+
 CONSTANT_STRING(power_max_property_name,"powerMax");
 
 // Parameters
 CONSTANT_STRING(channel_parameter_name,"channel");
+const long channel_min = 0;
 
 CONSTANT_STRING(channels_parameter_name,"channels");
 
@@ -74,6 +78,7 @@ const long count_min = 1;
 const long count_max = 2000000000;
 
 CONSTANT_STRING(pwm_index_parameter_name,"pwm_index");
+const long pwm_index_min = 0;
 
 CONSTANT_STRING(delays_parameter_name,"delays");
 

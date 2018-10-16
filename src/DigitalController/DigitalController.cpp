@@ -1,25 +1,25 @@
 // ----------------------------------------------------------------------------
-// RecursivePwmController.cpp
+// DigitalController.cpp
 //
 //
 // Authors:
 // Peter Polidoro peterpolidoro@gmail.com
 // ----------------------------------------------------------------------------
-#include "../RecursivePwmController.h"
+#include "../DigitalController.h"
 
 
-using namespace recursive_pwm_controller;
+using namespace digital_controller;
 
-RecursivePwmController::RecursivePwmController()
+DigitalController::DigitalController()
 {
 }
 
-RecursivePwmController::~RecursivePwmController()
+DigitalController::~DigitalController()
 {
   disableAll();
 }
 
-void RecursivePwmController::setup()
+void DigitalController::setup()
 {
   // Parent Setup
   ModularDeviceBase::setup();
@@ -57,21 +57,23 @@ void RecursivePwmController::setup()
     parameters_,
     functions_,
     callbacks_);
+
   // Properties
+  modular_server::Property & channel_count_property = modular_server_.createProperty(constants::channel_count_property_name,constants::channel_count_default);
+  channel_count_property.setRange(constants::channel_count_min,constants::CHANNEL_COUNT_MAX);
+  channel_count_property.attachPostSetValueFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelCountHandler));
+
   modular_server::Property & power_max_property = modular_server_.createProperty(constants::power_max_property_name,constants::power_max_default);
   power_max_property.setRange(constants::power_min,constants::power_max);
   power_max_property.setUnits(constants::percent_units);
-  power_max_property.attachPostSetElementValueFunctor(makeFunctor((Functor1<size_t> *)0,*this,&RecursivePwmController::setPowerMaxHandler));
+  power_max_property.attachPostSetElementValueFunctor(makeFunctor((Functor1<size_t> *)0,*this,&DigitalController::setPowerMaxHandler));
 
   setPowersToMax();
 
   // Parameters
   modular_server::Parameter & channel_parameter = modular_server_.createParameter(constants::channel_parameter_name);
-  channel_parameter.setRange(0,constants::CHANNEL_COUNT_MAX-1);
 
   modular_server::Parameter & channels_parameter = modular_server_.createParameter(constants::channels_parameter_name);
-  channels_parameter.setRange(0,constants::CHANNEL_COUNT_MAX-1);
-  channels_parameter.setArrayLengthRange(1,constants::CHANNEL_COUNT_MAX);
 
   modular_server::Parameter & power_parameter = modular_server_.createParameter(constants::power_parameter_name);
   power_parameter.setRange(constants::power_min,constants::power_max);
@@ -79,7 +81,6 @@ void RecursivePwmController::setup()
 
   modular_server::Parameter & powers_parameter = modular_server_.createParameter(constants::powers_parameter_name);
   powers_parameter.setRange(constants::power_min,constants::power_max);
-  powers_parameter.setArrayLengthRange(constants::CHANNEL_COUNT_MAX,constants::CHANNEL_COUNT_MAX);
   powers_parameter.setUnits(constants::percent_units);
 
   modular_server::Parameter & delay_parameter = modular_server_.createParameter(constants::delay_parameter_name);
@@ -99,7 +100,7 @@ void RecursivePwmController::setup()
   count_parameter.setUnits(constants::ms_units);
 
   modular_server::Parameter & pwm_index_parameter = modular_server_.createParameter(constants::pwm_index_parameter_name);
-  pwm_index_parameter.setRange(0,constants::INDEXED_PWM_COUNT_MAX-1);
+  pwm_index_parameter.setRange(constants::pwm_index_min,(long)constants::INDEXED_PWM_COUNT_MAX-1);
 
   // modular_server::Parameter & delays_parameter = modular_server_.createParameter(constants::delays_parameter_name);
   // delays_parameter.setRange(constants::delay_min,constants::delay_max);
@@ -116,124 +117,126 @@ void RecursivePwmController::setup()
   on_durations_parameter.setArrayLengthRange(1,constants::PWM_LEVEL_COUNT_MAX);
   on_durations_parameter.setUnits(constants::ms_units);
 
+  setChannelCountHandler();
+
   // Functions
   modular_server::Function & enable_all_function = modular_server_.createFunction(constants::enable_all_function_name);
-  enable_all_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::enableAllHandler));
+  enable_all_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::enableAllHandler));
 
   modular_server::Function & disable_all_function = modular_server_.createFunction(constants::disable_all_function_name);
-  disable_all_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::disableAllHandler));
+  disable_all_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::disableAllHandler));
 
   modular_server::Function & enabled_function = modular_server_.createFunction(constants::enabled_function_name);
-  enabled_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::enabledHandler));
+  enabled_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::enabledHandler));
   enabled_function.setResultTypeBool();
 
   modular_server::Function & set_power_when_on_function = modular_server_.createFunction(constants::set_power_when_on_function_name);
-  set_power_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setPowerWhenOnHandler));
+  set_power_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setPowerWhenOnHandler));
   set_power_when_on_function.addParameter(channel_parameter);
   set_power_when_on_function.addParameter(power_parameter);
   set_power_when_on_function.setResultTypeLong();
 
   modular_server::Function & set_powers_when_on_function = modular_server_.createFunction(constants::set_powers_when_on_function_name);
-  set_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setPowersWhenOnHandler));
+  set_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setPowersWhenOnHandler));
   set_powers_when_on_function.addParameter(powers_parameter);
   set_powers_when_on_function.setResultTypeArray();
   set_powers_when_on_function.setResultTypeLong();
 
   modular_server::Function & set_all_powers_when_on_function = modular_server_.createFunction(constants::set_all_powers_when_on_function_name);
-  set_all_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setAllPowersWhenOnHandler));
+  set_all_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllPowersWhenOnHandler));
   set_all_powers_when_on_function.addParameter(power_parameter);
   set_all_powers_when_on_function.setResultTypeArray();
   set_all_powers_when_on_function.setResultTypeLong();
 
   modular_server::Function & get_powers_when_on_function = modular_server_.createFunction(constants::get_powers_when_on_function_name);
-  get_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::getPowersWhenOnHandler));
+  get_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getPowersWhenOnHandler));
   get_powers_when_on_function.setResultTypeArray();
   get_powers_when_on_function.setResultTypeLong();
 
   modular_server::Function & get_powers_function = modular_server_.createFunction(constants::get_powers_function_name);
-  get_powers_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::getPowersHandler));
+  get_powers_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getPowersHandler));
   get_powers_function.setResultTypeArray();
   get_powers_function.setResultTypeLong();
 
   modular_server::Function & set_channel_on_function = modular_server_.createFunction(constants::set_channel_on_function_name);
-  set_channel_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelOnHandler));
+  set_channel_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelOnHandler));
   set_channel_on_function.addParameter(channel_parameter);
 
   modular_server::Function & set_channel_on_at_power_function = modular_server_.createFunction(constants::set_channel_on_at_power_function_name);
-  set_channel_on_at_power_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelOnAtPowerHandler));
+  set_channel_on_at_power_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelOnAtPowerHandler));
   set_channel_on_at_power_function.addParameter(channel_parameter);
   set_channel_on_at_power_function.addParameter(power_parameter);
 
   modular_server::Function & set_channel_off_function = modular_server_.createFunction(constants::set_channel_off_function_name);
-  set_channel_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelOffHandler));
+  set_channel_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelOffHandler));
   set_channel_off_function.addParameter(channel_parameter);
 
   modular_server::Function & set_channels_on_function = modular_server_.createFunction(constants::set_channels_on_function_name);
-  set_channels_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelsOnHandler));
+  set_channels_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelsOnHandler));
   set_channels_on_function.addParameter(channels_parameter);
 
   modular_server::Function & set_channels_on_at_power_function = modular_server_.createFunction(constants::set_channels_on_at_power_function_name);
-  set_channels_on_at_power_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelsOnAtPowerHandler));
+  set_channels_on_at_power_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelsOnAtPowerHandler));
   set_channels_on_at_power_function.addParameter(channels_parameter);
   set_channels_on_at_power_function.addParameter(power_parameter);
 
   modular_server::Function & set_channels_off_function = modular_server_.createFunction(constants::set_channels_off_function_name);
-  set_channels_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelsOffHandler));
+  set_channels_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelsOffHandler));
   set_channels_off_function.addParameter(channels_parameter);
 
   modular_server::Function & toggle_channel_function = modular_server_.createFunction(constants::toggle_channel_function_name);
-  toggle_channel_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::toggleChannelHandler));
+  toggle_channel_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::toggleChannelHandler));
   toggle_channel_function.addParameter(channel_parameter);
 
   modular_server::Function & toggle_channels_function = modular_server_.createFunction(constants::toggle_channels_function_name);
-  toggle_channels_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::toggleChannelsHandler));
+  toggle_channels_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::toggleChannelsHandler));
   toggle_channels_function.addParameter(channels_parameter);
 
   modular_server::Function & toggle_all_channels_function = modular_server_.createFunction(constants::toggle_all_channels_function_name);
-  toggle_all_channels_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::toggleAllChannelsHandler));
+  toggle_all_channels_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::toggleAllChannelsHandler));
 
   modular_server::Function & set_all_channels_on_function = modular_server_.createFunction(constants::set_all_channels_on_function_name);
-  set_all_channels_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setAllChannelsOnHandler));
+  set_all_channels_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllChannelsOnHandler));
 
   modular_server::Function & set_all_channels_off_function = modular_server_.createFunction(constants::set_all_channels_off_function_name);
-  set_all_channels_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setAllChannelsOffHandler));
+  set_all_channels_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllChannelsOffHandler));
 
   modular_server::Function & set_channel_on_all_others_off_function = modular_server_.createFunction(constants::set_channel_on_all_others_off_function_name);
-  set_channel_on_all_others_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelOnAllOthersOffHandler));
+  set_channel_on_all_others_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelOnAllOthersOffHandler));
   set_channel_on_all_others_off_function.addParameter(channel_parameter);
 
   modular_server::Function & set_channel_off_all_others_on_function = modular_server_.createFunction(constants::set_channel_off_all_others_on_function_name);
-  set_channel_off_all_others_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelOffAllOthersOnHandler));
+  set_channel_off_all_others_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelOffAllOthersOnHandler));
   set_channel_off_all_others_on_function.addParameter(channel_parameter);
 
   modular_server::Function & set_channels_on_all_others_off_function = modular_server_.createFunction(constants::set_channels_on_all_others_off_function_name);
-  set_channels_on_all_others_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelsOnAllOthersOffHandler));
+  set_channels_on_all_others_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelsOnAllOthersOffHandler));
   set_channels_on_all_others_off_function.addParameter(channels_parameter);
 
   modular_server::Function & set_channels_off_all_others_on_function = modular_server_.createFunction(constants::set_channels_off_all_others_on_function_name);
-  set_channels_off_all_others_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::setChannelsOffAllOthersOnHandler));
+  set_channels_off_all_others_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelsOffAllOthersOnHandler));
   set_channels_off_all_others_on_function.addParameter(channels_parameter);
 
   modular_server::Function & channel_is_on_function = modular_server_.createFunction(constants::channel_is_on_function_name);
-  channel_is_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::channelIsOnHandler));
+  channel_is_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::channelIsOnHandler));
   channel_is_on_function.addParameter(channel_parameter);
   channel_is_on_function.setResultTypeBool();
 
   modular_server::Function & get_channels_on_function = modular_server_.createFunction(constants::get_channels_on_function_name);
-  get_channels_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::getChannelsOnHandler));
+  get_channels_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getChannelsOnHandler));
   get_channels_on_function.setResultTypeArray();
   get_channels_on_function.setResultTypeLong();
 
   modular_server::Function & get_channels_off_function = modular_server_.createFunction(constants::get_channels_off_function_name);
-  get_channels_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::getChannelsOffHandler));
+  get_channels_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getChannelsOffHandler));
   get_channels_off_function.setResultTypeArray();
   get_channels_off_function.setResultTypeLong();
 
   modular_server::Function & get_channel_count_function = modular_server_.createFunction(constants::get_channel_count_function_name);
-  get_channel_count_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::getChannelCountHandler));
+  get_channel_count_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getChannelCountHandler));
 
   modular_server::Function & add_pwm_function = modular_server_.createFunction(constants::add_pwm_function_name);
-  add_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::addPwmHandler));
+  add_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::addPwmHandler));
   add_pwm_function.addParameter(channels_parameter);
   add_pwm_function.addParameter(delay_parameter);
   add_pwm_function.addParameter(period_parameter);
@@ -242,7 +245,7 @@ void RecursivePwmController::setup()
   add_pwm_function.setResultTypeLong();
 
   modular_server::Function & start_pwm_function = modular_server_.createFunction(constants::start_pwm_function_name);
-  start_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::startPwmHandler));
+  start_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::startPwmHandler));
   start_pwm_function.addParameter(channels_parameter);
   start_pwm_function.addParameter(delay_parameter);
   start_pwm_function.addParameter(period_parameter);
@@ -250,7 +253,7 @@ void RecursivePwmController::setup()
   start_pwm_function.setResultTypeLong();
 
   modular_server::Function & add_recursive_pwm_function = modular_server_.createFunction(constants::add_recursive_pwm_function_name);
-  add_recursive_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::addRecursivePwmHandler));
+  add_recursive_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::addRecursivePwmHandler));
   add_recursive_pwm_function.addParameter(channels_parameter);
   add_recursive_pwm_function.addParameter(delay_parameter);
   add_recursive_pwm_function.addParameter(periods_parameter);
@@ -259,7 +262,7 @@ void RecursivePwmController::setup()
   add_recursive_pwm_function.setResultTypeLong();
 
   modular_server::Function & start_recursive_pwm_function = modular_server_.createFunction(constants::start_recursive_pwm_function_name);
-  start_recursive_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::startRecursivePwmHandler));
+  start_recursive_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::startRecursivePwmHandler));
   start_recursive_pwm_function.addParameter(channels_parameter);
   start_recursive_pwm_function.addParameter(delay_parameter);
   start_recursive_pwm_function.addParameter(periods_parameter);
@@ -267,19 +270,19 @@ void RecursivePwmController::setup()
   start_recursive_pwm_function.setResultTypeLong();
 
   modular_server::Function & stop_pwm_function = modular_server_.createFunction(constants::stop_pwm_function_name);
-  stop_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::stopPwmHandler));
+  stop_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::stopPwmHandler));
   stop_pwm_function.addParameter(pwm_index_parameter);
 
   modular_server::Function & stop_all_pwm_function = modular_server_.createFunction(constants::stop_all_pwm_function_name);
-  stop_all_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::stopAllPwmHandler));
+  stop_all_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::stopAllPwmHandler));
 
   modular_server::Function & get_channels_pwm_indexes_function = modular_server_.createFunction(constants::get_channels_pwm_indexes_function_name);
-  get_channels_pwm_indexes_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::getChannelsPwmIndexesHandler));
+  get_channels_pwm_indexes_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getChannelsPwmIndexesHandler));
   get_channels_pwm_indexes_function.setResultTypeArray();
   get_channels_pwm_indexes_function.setResultTypeLong();
 
   modular_server::Function & get_pwm_info_function = modular_server_.createFunction(constants::get_pwm_info_function_name);
-  get_pwm_info_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&RecursivePwmController::getPwmInfoHandler));
+  get_pwm_info_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getPwmInfoHandler));
   get_pwm_info_function.setResultTypeArray();
   get_pwm_info_function.setResultTypeObject();
 
@@ -287,24 +290,24 @@ void RecursivePwmController::setup()
 
 }
 
-void RecursivePwmController::enableAll()
+void DigitalController::enableAll()
 {
   digitalWrite(constants::enable_pin,LOW);
   enabled_ = true;
 }
 
-void RecursivePwmController::disableAll()
+void DigitalController::disableAll()
 {
   digitalWrite(constants::enable_pin,HIGH);
   enabled_ = false;
 }
 
-bool RecursivePwmController::enabled()
+bool DigitalController::enabled()
 {
   return enabled_;
 }
 
-long RecursivePwmController::setPowerWhenOn(size_t channel,
+long DigitalController::setPowerWhenOn(size_t channel,
   long power)
 {
   long power_to_set = 0;
@@ -333,7 +336,7 @@ long RecursivePwmController::setPowerWhenOn(size_t channel,
   return power_to_set;
 }
 
-long RecursivePwmController::getPowerWhenOn(size_t channel)
+long DigitalController::getPowerWhenOn(size_t channel)
 {
   long power = constants::power_min;
   if (channel < constants::CHANNEL_COUNT_MAX)
@@ -345,7 +348,7 @@ long RecursivePwmController::getPowerWhenOn(size_t channel)
   return power;
 }
 
-long RecursivePwmController::getPower(size_t channel)
+long DigitalController::getPower(size_t channel)
 {
   long power = constants::power_min;
   if (channel < constants::CHANNEL_COUNT_MAX)
@@ -357,7 +360,7 @@ long RecursivePwmController::getPower(size_t channel)
   return power;
 }
 
-void RecursivePwmController::setChannels(uint32_t channels)
+void DigitalController::setChannels(uint32_t channels)
 {
   uint32_t bit = 1;
   for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
@@ -373,7 +376,7 @@ void RecursivePwmController::setChannels(uint32_t channels)
   }
 }
 
-void RecursivePwmController::setChannelOn(size_t channel)
+void DigitalController::setChannelOn(size_t channel)
 {
   if (channel < constants::CHANNEL_COUNT_MAX)
   {
@@ -398,7 +401,7 @@ void RecursivePwmController::setChannelOn(size_t channel)
   }
 }
 
-void RecursivePwmController::setChannelOnAtPower(size_t channel,
+void DigitalController::setChannelOnAtPower(size_t channel,
   long power)
 {
   if (channel < constants::CHANNEL_COUNT_MAX)
@@ -421,7 +424,7 @@ void RecursivePwmController::setChannelOnAtPower(size_t channel,
   }
 }
 
-void RecursivePwmController::setChannelOff(size_t channel)
+void DigitalController::setChannelOff(size_t channel)
 {
   if (channel < constants::CHANNEL_COUNT_MAX)
   {
@@ -436,7 +439,7 @@ void RecursivePwmController::setChannelOff(size_t channel)
   }
 }
 
-void RecursivePwmController::setChannelsOn(uint32_t channels)
+void DigitalController::setChannelsOn(uint32_t channels)
 {
   uint32_t bit = 1;
   for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
@@ -448,7 +451,7 @@ void RecursivePwmController::setChannelsOn(uint32_t channels)
   }
 }
 
-void RecursivePwmController::setChannelsOnAtPower(uint32_t channels,
+void DigitalController::setChannelsOnAtPower(uint32_t channels,
   long power)
 {
   uint32_t bit = 1;
@@ -461,7 +464,7 @@ void RecursivePwmController::setChannelsOnAtPower(uint32_t channels,
   }
 }
 
-void RecursivePwmController::setChannelsOff(uint32_t channels)
+void DigitalController::setChannelsOff(uint32_t channels)
 {
   uint32_t bit = 1;
   for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
@@ -473,7 +476,7 @@ void RecursivePwmController::setChannelsOff(uint32_t channels)
   }
 }
 
-void RecursivePwmController::toggleChannel(size_t channel)
+void DigitalController::toggleChannel(size_t channel)
 {
   if (channel < constants::CHANNEL_COUNT_MAX)
   {
@@ -494,7 +497,7 @@ void RecursivePwmController::toggleChannel(size_t channel)
   }
 }
 
-void RecursivePwmController::toggleChannels(uint32_t channels)
+void DigitalController::toggleChannels(uint32_t channels)
 {
   noInterrupts();
   channels_ ^= channels;
@@ -502,7 +505,7 @@ void RecursivePwmController::toggleChannels(uint32_t channels)
   setChannels(channels_);
 }
 
-void RecursivePwmController::toggleAllChannels()
+void DigitalController::toggleAllChannels()
 {
   noInterrupts();
   channels_ = ~channels_;
@@ -510,7 +513,7 @@ void RecursivePwmController::toggleAllChannels()
   setChannels(channels_);
 }
 
-void RecursivePwmController::setAllChannelsOn()
+void DigitalController::setAllChannelsOn()
 {
   for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
@@ -518,7 +521,7 @@ void RecursivePwmController::setAllChannelsOn()
   }
 }
 
-void RecursivePwmController::setAllChannelsOff()
+void DigitalController::setAllChannelsOff()
 {
   for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
@@ -526,7 +529,7 @@ void RecursivePwmController::setAllChannelsOff()
   }
 }
 
-void RecursivePwmController::setChannelOnAllOthersOff(size_t channel)
+void DigitalController::setChannelOnAllOthersOff(size_t channel)
 {
   if (channel < constants::CHANNEL_COUNT_MAX)
   {
@@ -539,7 +542,7 @@ void RecursivePwmController::setChannelOnAllOthersOff(size_t channel)
   }
 }
 
-void RecursivePwmController::setChannelOffAllOthersOn(size_t channel)
+void DigitalController::setChannelOffAllOthersOn(size_t channel)
 {
   if (channel < constants::CHANNEL_COUNT_MAX)
   {
@@ -552,7 +555,7 @@ void RecursivePwmController::setChannelOffAllOthersOn(size_t channel)
   }
 }
 
-void RecursivePwmController::setChannelsOnAllOthersOff(uint32_t channels)
+void DigitalController::setChannelsOnAllOthersOff(uint32_t channels)
 {
   noInterrupts();
   channels_ = channels;
@@ -560,7 +563,7 @@ void RecursivePwmController::setChannelsOnAllOthersOff(uint32_t channels)
   setChannels(channels_);
 }
 
-void RecursivePwmController::setChannelsOffAllOthersOn(uint32_t channels)
+void DigitalController::setChannelsOffAllOthersOn(uint32_t channels)
 {
   noInterrupts();
   channels_ = ~channels;
@@ -568,7 +571,7 @@ void RecursivePwmController::setChannelsOffAllOthersOn(uint32_t channels)
   setChannels(channels_);
 }
 
-bool RecursivePwmController::channelIsOn(size_t channel)
+bool DigitalController::channelIsOn(size_t channel)
 {
   bool channel_is_on = false;
   if (channel < constants::CHANNEL_COUNT_MAX)
@@ -585,17 +588,20 @@ bool RecursivePwmController::channelIsOn(size_t channel)
   return channel_is_on;
 }
 
-uint32_t RecursivePwmController::getChannelsOn()
+uint32_t DigitalController::getChannelsOn()
 {
   return channels_;
 }
 
-size_t RecursivePwmController::getChannelCount()
+size_t DigitalController::getChannelCount()
 {
-  return constants::CHANNEL_COUNT_MAX;
+  long channel_count;
+  modular_server_.property(constants::channel_count_property_name).getValue(channel_count);
+
+  return channel_count;
 }
 
-int RecursivePwmController::addPwm(uint32_t channels,
+int DigitalController::addPwm(uint32_t channels,
   long delay,
   long period,
   long on_duration,
@@ -605,7 +611,7 @@ int RecursivePwmController::addPwm(uint32_t channels,
   {
     return constants::NO_PWM_AVAILABLE_INDEX;
   }
-  recursive_pwm_controller::constants::PwmInfo pwm_info;
+  digital_controller::constants::PwmInfo pwm_info;
   pwm_info.channels = channels;
   pwm_info.running = false;
   pwm_info.level = 0;
@@ -619,21 +625,21 @@ int RecursivePwmController::addPwm(uint32_t channels,
   pwm_info.functor_count_completed = functor_dummy_;
   pwm_info.functor_arg = -1;
   int pwm_index = indexed_pwm_.add(pwm_info);
-  EventIdPair event_id_pair = event_controller_.addPwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::setChannelsOnHandler),
-    makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::setChannelsOffHandler),
+  EventIdPair event_id_pair = event_controller_.addPwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&DigitalController::setChannelsOnHandler),
+    makeFunctor((Functor1<int> *)0,*this,&DigitalController::setChannelsOffHandler),
     delay,
     period,
     on_duration,
     count,
     pwm_index);
-  event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startPwmHandler));
-  event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopPwmHandler));
+  event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmHandler));
+  event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmHandler));
   indexed_pwm_[pwm_index].event_id_pair = event_id_pair;
   event_controller_.enable(event_id_pair);
   return pwm_index;
 }
 
-int RecursivePwmController::startPwm(uint32_t channels,
+int DigitalController::startPwm(uint32_t channels,
   long delay,
   long period,
   long on_duration)
@@ -641,7 +647,7 @@ int RecursivePwmController::startPwm(uint32_t channels,
   return addPwm(channels,delay,period,on_duration,-1);
 }
 
-int RecursivePwmController::addRecursivePwm(uint32_t channels,
+int DigitalController::addRecursivePwm(uint32_t channels,
   long delay,
   RecursivePwmValues periods,
   RecursivePwmValues on_durations,
@@ -694,15 +700,15 @@ int RecursivePwmController::addRecursivePwm(uint32_t channels,
 
   if (pwm_index != constants::NO_CHILD_PWM_INDEX)
   {
-    EventIdPair event_id_pair = event_controller_.addPwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startRecursivePwmHandler),
-      makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopRecursivePwmHandler),
+    EventIdPair event_id_pair = event_controller_.addPwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&DigitalController::startRecursivePwmHandler),
+      makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopRecursivePwmHandler),
       delay,
       pwm_info.period,
       pwm_info.on_duration,
       count,
       pwm_index);
-    event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startPwmHandler));
-    event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopPwmHandler));
+    event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmHandler));
+    event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmHandler));
     indexed_pwm_[pwm_index].event_id_pair = event_id_pair;
     event_controller_.enable(event_id_pair);
   }
@@ -710,7 +716,7 @@ int RecursivePwmController::addRecursivePwm(uint32_t channels,
   return pwm_index;
 }
 
-int RecursivePwmController::startRecursivePwm(uint32_t channels,
+int DigitalController::startRecursivePwm(uint32_t channels,
   long delay,
   RecursivePwmValues periods,
   RecursivePwmValues on_durations)
@@ -718,7 +724,7 @@ int RecursivePwmController::startRecursivePwm(uint32_t channels,
   return addRecursivePwm(channels,delay,periods,on_durations,-1);
 }
 
-void RecursivePwmController::addCountCompletedFunctor(int pwm_index,
+void DigitalController::addCountCompletedFunctor(int pwm_index,
   const Functor1<int> & functor,
   int arg)
 {
@@ -734,7 +740,7 @@ void RecursivePwmController::addCountCompletedFunctor(int pwm_index,
   }
 }
 
-void RecursivePwmController::stopPwm(int pwm_index)
+void DigitalController::stopPwm(int pwm_index)
 {
   if (pwm_index < 0)
   {
@@ -752,7 +758,7 @@ void RecursivePwmController::stopPwm(int pwm_index)
   }
 }
 
-void RecursivePwmController::stopAllPwm()
+void DigitalController::stopAllPwm()
 {
   for (size_t i=0; i<constants::INDEXED_PWM_COUNT_MAX; ++i)
   {
@@ -762,7 +768,7 @@ void RecursivePwmController::stopAllPwm()
   indexed_pwm_.clear();
 }
 
-void RecursivePwmController::addEventUsingDelay(const Functor1<int> & functor,
+void DigitalController::addEventUsingDelay(const Functor1<int> & functor,
   uint32_t delay,
   int arg)
 {
@@ -774,7 +780,7 @@ void RecursivePwmController::addEventUsingDelay(const Functor1<int> & functor,
   event_controller_.enable(event_id);
 }
 
-RecursivePwmController::ChannelsPwmIndexes RecursivePwmController::getChannelsPwmIndexes()
+DigitalController::ChannelsPwmIndexes DigitalController::getChannelsPwmIndexes()
 {
   ChannelsPwmIndexes channels_pwm_indexes;
   noInterrupts();
@@ -787,7 +793,7 @@ RecursivePwmController::ChannelsPwmIndexes RecursivePwmController::getChannelsPw
   return channels_pwm_indexes;
 }
 
-uint32_t RecursivePwmController::arrayToChannels(ArduinoJson::JsonArray & channels_array)
+uint32_t DigitalController::arrayToChannels(ArduinoJson::JsonArray & channels_array)
 {
   uint32_t channels = 0;
   uint32_t bit = 1;
@@ -801,7 +807,7 @@ uint32_t RecursivePwmController::arrayToChannels(ArduinoJson::JsonArray & channe
   return channels;
 }
 
-RecursivePwmController::RecursivePwmValues RecursivePwmController::arrayToRecursivePwmValues(ArduinoJson::JsonArray & array)
+DigitalController::RecursivePwmValues DigitalController::arrayToRecursivePwmValues(ArduinoJson::JsonArray & array)
 {
   RecursivePwmValues pwm_values;
   for (ArduinoJson::JsonArray::iterator array_it=array.begin();
@@ -814,7 +820,7 @@ RecursivePwmController::RecursivePwmValues RecursivePwmController::arrayToRecurs
   return pwm_values;
 }
 
-void RecursivePwmController::removeParentAndChildrenPwmInfo(int pwm_index)
+void DigitalController::removeParentAndChildrenPwmInfo(int pwm_index)
 {
   if (pwm_index >= 0)
   {
@@ -826,7 +832,7 @@ void RecursivePwmController::removeParentAndChildrenPwmInfo(int pwm_index)
   }
 }
 
-long RecursivePwmController::powerToAnalogWriteValue(long power)
+long DigitalController::powerToAnalogWriteValue(long power)
 {
   long pwm_value = map(power,
     constants::power_min,
@@ -841,7 +847,7 @@ long RecursivePwmController::powerToAnalogWriteValue(long power)
   return analog_write_value;
 }
 
-void RecursivePwmController::setPowersToMax()
+void DigitalController::setPowersToMax()
 {
   modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
   long power_max;
@@ -854,7 +860,7 @@ void RecursivePwmController::setPowersToMax()
   }
 }
 
-void RecursivePwmController::updateChannel(size_t channel)
+void DigitalController::updateChannel(size_t channel)
 {
   uint32_t bit = 1;
   bit = bit << channel;
@@ -867,7 +873,7 @@ void RecursivePwmController::updateChannel(size_t channel)
   }
 }
 
-void RecursivePwmController::updateAllChannels()
+void DigitalController::updateAllChannels()
 {
   noInterrupts();
   uint32_t channels = channels_;
@@ -875,7 +881,7 @@ void RecursivePwmController::updateAllChannels()
   setChannels(channels);
 }
 
-void RecursivePwmController::initializePwmIndexes()
+void DigitalController::initializePwmIndexes()
 {
   noInterrupts();
   for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
@@ -888,7 +894,7 @@ void RecursivePwmController::initializePwmIndexes()
   interrupts();
 }
 
-void RecursivePwmController::setChannelPwmIndexesRunning(size_t channel,
+void DigitalController::setChannelPwmIndexesRunning(size_t channel,
   size_t level,
   int pwm_index)
 {
@@ -900,7 +906,7 @@ void RecursivePwmController::setChannelPwmIndexesRunning(size_t channel,
   }
 }
 
-void RecursivePwmController::setChannelsPwmIndexesRunning(uint32_t channels,
+void DigitalController::setChannelsPwmIndexesRunning(uint32_t channels,
   size_t level,
   int pwm_index)
 {
@@ -919,7 +925,7 @@ void RecursivePwmController::setChannelsPwmIndexesRunning(uint32_t channels,
   }
 }
 
-void RecursivePwmController::setChannelPwmIndexesStopped(size_t channel,
+void DigitalController::setChannelPwmIndexesStopped(size_t channel,
   size_t level)
 {
   if ((channel < constants::CHANNEL_COUNT_MAX) && (level < constants::PWM_LEVEL_COUNT_MAX))
@@ -930,7 +936,7 @@ void RecursivePwmController::setChannelPwmIndexesStopped(size_t channel,
   }
 }
 
-void RecursivePwmController::setChannelsPwmIndexesStopped(uint32_t channels,
+void DigitalController::setChannelsPwmIndexesStopped(uint32_t channels,
   size_t level)
 {
   if (level < constants::PWM_LEVEL_COUNT_MAX)
@@ -948,7 +954,7 @@ void RecursivePwmController::setChannelsPwmIndexesStopped(uint32_t channels,
   }
 }
 
-void RecursivePwmController::returnPwmIndexResponse(int pwm_index)
+void DigitalController::returnPwmIndexResponse(int pwm_index)
 {
   if (pwm_index >= 0)
   {
@@ -986,7 +992,7 @@ void RecursivePwmController::returnPwmIndexResponse(int pwm_index)
 // modular_server_.property(property_name).getElementValue(element_index,value) value type must match the property array element default type
 // modular_server_.property(property_name).setElementValue(element_index,value) value type must match the property array element default type
 
-void RecursivePwmController::startPwmHandler(int pwm_index)
+void DigitalController::startPwmHandler(int pwm_index)
 {
   uint32_t & channels = indexed_pwm_[pwm_index].channels;
   uint8_t & level = indexed_pwm_[pwm_index].level;
@@ -995,7 +1001,7 @@ void RecursivePwmController::startPwmHandler(int pwm_index)
   indexed_pwm_[pwm_index].running = true;
 }
 
-void RecursivePwmController::stopPwmHandler(int pwm_index)
+void DigitalController::stopPwmHandler(int pwm_index)
 {
   constants::PwmInfo pwm_info = indexed_pwm_[pwm_index];
   uint32_t & channels = pwm_info.channels;
@@ -1019,7 +1025,27 @@ void RecursivePwmController::stopPwmHandler(int pwm_index)
   }
 }
 
-void RecursivePwmController::setPowerMaxHandler(size_t channel)
+void DigitalController::setChannelCountHandler()
+{
+  long channel_count = getChannelCount();
+  long channel_max = channel_count - 1;
+
+  modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
+  power_max_property.setArrayLengthRange(channel_count,channel_count);
+
+  modular_server::Parameter & channel_parameter = modular_server_.parameter(constants::channel_parameter_name);
+  channel_parameter.setRange(constants::channel_min,channel_max);
+
+  modular_server::Parameter & channels_parameter = modular_server_.parameter(constants::channels_parameter_name);
+  channels_parameter.setRange(constants::channel_min,channel_max);
+  channels_parameter.setArrayLengthRange(constants::channel_count_min,channel_count);
+
+  modular_server::Parameter & powers_parameter = modular_server_.parameter(constants::powers_parameter_name);
+  powers_parameter.setArrayLengthRange(channel_count,channel_count);
+
+}
+
+void DigitalController::setPowerMaxHandler(size_t channel)
 {
   modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
   long power_max;
@@ -1034,23 +1060,23 @@ void RecursivePwmController::setPowerMaxHandler(size_t channel)
   updateChannel(channel);
 }
 
-void RecursivePwmController::enableAllHandler()
+void DigitalController::enableAllHandler()
 {
   enableAll();
 }
 
-void RecursivePwmController::disableAllHandler()
+void DigitalController::disableAllHandler()
 {
   disableAll();
 }
 
-void RecursivePwmController::enabledHandler()
+void DigitalController::enabledHandler()
 {
   bool all_enabled = enabled();
   modular_server_.response().returnResult(all_enabled);
 }
 
-void RecursivePwmController::setPowerWhenOnHandler()
+void DigitalController::setPowerWhenOnHandler()
 {
   size_t channel;
   modular_server_.parameter(constants::channel_parameter_name).getValue(channel);
@@ -1060,7 +1086,7 @@ void RecursivePwmController::setPowerWhenOnHandler()
   modular_server_.response().returnResult(power);
 }
 
-void RecursivePwmController::setPowersWhenOnHandler()
+void DigitalController::setPowersWhenOnHandler()
 {
   ArduinoJson::JsonArray * powers_array_ptr;
   modular_server_.parameter(constants::powers_parameter_name).getValue(powers_array_ptr);
@@ -1082,7 +1108,7 @@ void RecursivePwmController::setPowersWhenOnHandler()
   modular_server_.response().endArray();
 }
 
-void RecursivePwmController::setAllPowersWhenOnHandler()
+void DigitalController::setAllPowersWhenOnHandler()
 {
   size_t power_to_set;
   modular_server_.parameter(constants::power_parameter_name).getValue(power_to_set);
@@ -1099,7 +1125,7 @@ void RecursivePwmController::setAllPowersWhenOnHandler()
   modular_server_.response().endArray();
 }
 
-void RecursivePwmController::getPowersWhenOnHandler()
+void DigitalController::getPowersWhenOnHandler()
 {
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
@@ -1112,7 +1138,7 @@ void RecursivePwmController::getPowersWhenOnHandler()
   modular_server_.response().endArray();
 }
 
-void RecursivePwmController::getPowersHandler()
+void DigitalController::getPowersHandler()
 {
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
@@ -1125,14 +1151,14 @@ void RecursivePwmController::getPowersHandler()
   modular_server_.response().endArray();
 }
 
-void RecursivePwmController::setChannelOnHandler()
+void DigitalController::setChannelOnHandler()
 {
   size_t channel;
   modular_server_.parameter(constants::channel_parameter_name).getValue(channel);
   setChannelOn(channel);
 }
 
-void RecursivePwmController::setChannelOnAtPowerHandler()
+void DigitalController::setChannelOnAtPowerHandler()
 {
   size_t channel;
   modular_server_.parameter(constants::channel_parameter_name).getValue(channel);
@@ -1141,14 +1167,14 @@ void RecursivePwmController::setChannelOnAtPowerHandler()
   setChannelOnAtPower(channel,power);
 }
 
-void RecursivePwmController::setChannelOffHandler()
+void DigitalController::setChannelOffHandler()
 {
   size_t channel;
   modular_server_.parameter(constants::channel_parameter_name).getValue(channel);
   setChannelOff(channel);
 }
 
-void RecursivePwmController::setChannelsOnHandler()
+void DigitalController::setChannelsOnHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1156,7 +1182,7 @@ void RecursivePwmController::setChannelsOnHandler()
   setChannelsOn(channels);
 }
 
-void RecursivePwmController::setChannelsOnAtPowerHandler()
+void DigitalController::setChannelsOnAtPowerHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1166,7 +1192,7 @@ void RecursivePwmController::setChannelsOnAtPowerHandler()
   setChannelsOnAtPower(channels,power);
 }
 
-void RecursivePwmController::setChannelsOffHandler()
+void DigitalController::setChannelsOffHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1174,14 +1200,14 @@ void RecursivePwmController::setChannelsOffHandler()
   setChannelsOff(channels);
 }
 
-void RecursivePwmController::toggleChannelHandler()
+void DigitalController::toggleChannelHandler()
 {
   size_t channel;
   modular_server_.parameter(constants::channel_parameter_name).getValue(channel);
   toggleChannel(channel);
 }
 
-void RecursivePwmController::toggleChannelsHandler()
+void DigitalController::toggleChannelsHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1189,36 +1215,36 @@ void RecursivePwmController::toggleChannelsHandler()
   toggleChannels(channels);
 }
 
-void RecursivePwmController::toggleAllChannelsHandler()
+void DigitalController::toggleAllChannelsHandler()
 {
   toggleAllChannels();
 }
 
-void RecursivePwmController::setAllChannelsOnHandler()
+void DigitalController::setAllChannelsOnHandler()
 {
   setAllChannelsOn();
 }
 
-void RecursivePwmController::setAllChannelsOffHandler()
+void DigitalController::setAllChannelsOffHandler()
 {
   setAllChannelsOff();
 }
 
-void RecursivePwmController::setChannelOnAllOthersOffHandler()
+void DigitalController::setChannelOnAllOthersOffHandler()
 {
   size_t channel;
   modular_server_.parameter(constants::channel_parameter_name).getValue(channel);
   setChannelOnAllOthersOff(channel);
 }
 
-void RecursivePwmController::setChannelOffAllOthersOnHandler()
+void DigitalController::setChannelOffAllOthersOnHandler()
 {
   size_t channel;
   modular_server_.parameter(constants::channel_parameter_name).getValue(channel);
   setChannelOffAllOthersOn(channel);
 }
 
-void RecursivePwmController::setChannelsOnAllOthersOffHandler()
+void DigitalController::setChannelsOnAllOthersOffHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1226,7 +1252,7 @@ void RecursivePwmController::setChannelsOnAllOthersOffHandler()
   setChannelsOnAllOthersOff(channels);
 }
 
-void RecursivePwmController::setChannelsOffAllOthersOnHandler()
+void DigitalController::setChannelsOffAllOthersOnHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1234,7 +1260,7 @@ void RecursivePwmController::setChannelsOffAllOthersOnHandler()
   setChannelsOffAllOthersOn(channels);
 }
 
-void RecursivePwmController::channelIsOnHandler()
+void DigitalController::channelIsOnHandler()
 {
   size_t channel;
   modular_server_.parameter(constants::channel_parameter_name).getValue(channel);
@@ -1242,7 +1268,7 @@ void RecursivePwmController::channelIsOnHandler()
   modular_server_.response().returnResult(channel_is_on);
 }
 
-void RecursivePwmController::getChannelsOnHandler()
+void DigitalController::getChannelsOnHandler()
 {
   uint32_t channels_on = getChannelsOn();
   uint32_t bit = 1;
@@ -1258,7 +1284,7 @@ void RecursivePwmController::getChannelsOnHandler()
   modular_server_.response().endArray();
 }
 
-void RecursivePwmController::getChannelsOffHandler()
+void DigitalController::getChannelsOffHandler()
 {
   uint32_t channels_on = getChannelsOn();
   uint32_t channels_off = ~channels_on;
@@ -1275,13 +1301,13 @@ void RecursivePwmController::getChannelsOffHandler()
   modular_server_.response().endArray();
 }
 
-void RecursivePwmController::getChannelCountHandler()
+void DigitalController::getChannelCountHandler()
 {
   size_t channel_count = getChannelCount();
   modular_server_.response().returnResult(channel_count);
 }
 
-void RecursivePwmController::addPwmHandler()
+void DigitalController::addPwmHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1298,7 +1324,7 @@ void RecursivePwmController::addPwmHandler()
   returnPwmIndexResponse(pwm_index);
 }
 
-void RecursivePwmController::startPwmHandler()
+void DigitalController::startPwmHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1313,7 +1339,7 @@ void RecursivePwmController::startPwmHandler()
   returnPwmIndexResponse(pwm_index);
 }
 
-void RecursivePwmController::addRecursivePwmHandler()
+void DigitalController::addRecursivePwmHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
@@ -1332,23 +1358,23 @@ void RecursivePwmController::addRecursivePwmHandler()
   returnPwmIndexResponse(pwm_index);
 }
 
-void RecursivePwmController::startRecursivePwmHandler()
+void DigitalController::startRecursivePwmHandler()
 {
 }
 
-void RecursivePwmController::stopPwmHandler()
+void DigitalController::stopPwmHandler()
 {
   int pwm_index;
   modular_server_.parameter(constants::pwm_index_parameter_name).getValue(pwm_index);
   stopPwm(pwm_index);
 }
 
-void RecursivePwmController::stopAllPwmHandler()
+void DigitalController::stopAllPwmHandler()
 {
   stopAllPwm();
 }
 
-void RecursivePwmController::getChannelsPwmIndexesHandler()
+void DigitalController::getChannelsPwmIndexesHandler()
 {
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
@@ -1370,7 +1396,7 @@ void RecursivePwmController::getChannelsPwmIndexesHandler()
 
 }
 
-void RecursivePwmController::getPwmInfoHandler()
+void DigitalController::getPwmInfoHandler()
 {
   noInterrupts();
   IndexedContainer<constants::PwmInfo,
@@ -1415,19 +1441,19 @@ void RecursivePwmController::getPwmInfoHandler()
 
 }
 
-void RecursivePwmController::setChannelsOnHandler(int pwm_index)
+void DigitalController::setChannelsOnHandler(int pwm_index)
 {
   uint32_t & channels = indexed_pwm_[pwm_index].channels;
   setChannelsOn(channels);
 }
 
-void RecursivePwmController::setChannelsOffHandler(int pwm_index)
+void DigitalController::setChannelsOffHandler(int pwm_index)
 {
   uint32_t & channels = indexed_pwm_[pwm_index].channels;
   setChannelsOff(channels);
 }
 
-void RecursivePwmController::startRecursivePwmHandler(int pwm_index)
+void DigitalController::startRecursivePwmHandler(int pwm_index)
 {
   constants::PwmInfo pwm_info = indexed_pwm_[pwm_index];
   int child_index = pwm_info.child_index;
@@ -1441,20 +1467,20 @@ void RecursivePwmController::startRecursivePwmHandler(int pwm_index)
     long delay = indexed_pwm_[child_index].delay;
     long period = indexed_pwm_[child_index].period;
     long on_duration = indexed_pwm_[child_index].on_duration;
-    EventIdPair event_id_pair = event_controller_.addInfinitePwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startRecursivePwmHandler),
-      makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopRecursivePwmHandler),
+    EventIdPair event_id_pair = event_controller_.addInfinitePwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&DigitalController::startRecursivePwmHandler),
+      makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopRecursivePwmHandler),
       delay,
       period,
       on_duration,
       child_index);
-    event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startPwmHandler));
-    event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopPwmHandler));
+    event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmHandler));
+    event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmHandler));
     indexed_pwm_[child_index].event_id_pair = event_id_pair;
     event_controller_.enable(event_id_pair);
   }
 }
 
-void RecursivePwmController::stopRecursivePwmHandler(int pwm_index)
+void DigitalController::stopRecursivePwmHandler(int pwm_index)
 {
   constants::PwmInfo pwm_info = indexed_pwm_[pwm_index];
   if (pwm_info.level == 0)

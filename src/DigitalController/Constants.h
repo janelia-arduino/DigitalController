@@ -5,20 +5,20 @@
 // Authors:
 // Peter Polidoro peterpolidoro@gmail.com
 // ----------------------------------------------------------------------------
-#ifndef RECURSIVE_PWM_CONTROLLER_CONSTANTS_H
-#define RECURSIVE_PWM_CONTROLLER_CONSTANTS_H
+#ifndef DIGITAL_CONTROLLER_CONSTANTS_H
+#define DIGITAL_CONTROLLER_CONSTANTS_H
 #include <ConstantVariable.h>
 #include <ModularServer.h>
 
 #include <EventController.h>
 
 
-namespace recursive_pwm_controller
+namespace digital_controller
 {
 namespace constants
 {
 //MAX values must be >= 1, >= created/copied count, < RAM limit
-enum{PROPERTY_COUNT_MAX=1};
+enum{PROPERTY_COUNT_MAX=2};
 enum{PARAMETER_COUNT_MAX=12};
 enum{FUNCTION_COUNT_MAX=35};
 enum{CALLBACK_COUNT_MAX=1};
@@ -74,10 +74,15 @@ extern ConstantString percent_units;
 
 // Properties
 // Property values must be long, double, bool, long[], double[], bool[], char[], ConstantString *, (ConstantString *)[]
+extern ConstantString channel_count_property_name;
+extern const long channel_count_min;
+extern const long channel_count_default;
+
 extern ConstantString power_max_property_name;
 
 // Parameters
 extern ConstantString channel_parameter_name;
+extern const long channel_min;
 
 extern ConstantString channels_parameter_name;
 
@@ -104,6 +109,7 @@ extern const long count_min;
 extern const long count_max;
 
 extern ConstantString pwm_index_parameter_name;
+extern const long pwm_index_min;
 
 extern ConstantString delays_parameter_name;
 

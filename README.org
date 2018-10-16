@@ -1,18 +1,18 @@
-#+TITLE: RecursivePwmController
+#+TITLE: DigitalController
 #+AUTHOR: Peter Polidoro
 #+EMAIL: peterpolidoro@gmail.com
 
 * Library Information
-  - Name :: RecursivePwmController
+  - Name :: DigitalController
   - Version :: 1.0.0
   - License :: BSD
-  - URL :: https://github.com/janelia-arduino/RecursivePwmController
+  - URL :: https://github.com/janelia-arduino/DigitalController
   - Author :: Peter Polidoro
   - Email :: peterpolidoro@gmail.com
 
 ** Description
 
-   Modular device high power switch controller library.
+   Modular device digital output controller library.
 
 * API NAMES
 
