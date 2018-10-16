@@ -53,10 +53,10 @@ void RecursivePwmController::setup()
 
   // Add Firmware
   modular_server_.addFirmware(constants::firmware_info,
-                              properties_,
-                              parameters_,
-                              functions_,
-                              callbacks_);
+    properties_,
+    parameters_,
+    functions_,
+    callbacks_);
   // Properties
   modular_server::Property & power_max_property = modular_server_.createProperty(constants::power_max_property_name,constants::power_max_default);
   power_max_property.setRange(constants::power_min,constants::power_max);
@@ -305,7 +305,7 @@ bool RecursivePwmController::enabled()
 }
 
 long RecursivePwmController::setPowerWhenOn(size_t channel,
-                                            long power)
+  long power)
 {
   long power_to_set = 0;
   if (channel < constants::CHANNEL_COUNT_MAX)
@@ -399,7 +399,7 @@ void RecursivePwmController::setChannelOn(size_t channel)
 }
 
 void RecursivePwmController::setChannelOnAtPower(size_t channel,
-                                                 long power)
+  long power)
 {
   if (channel < constants::CHANNEL_COUNT_MAX)
   {
@@ -449,7 +449,7 @@ void RecursivePwmController::setChannelsOn(uint32_t channels)
 }
 
 void RecursivePwmController::setChannelsOnAtPower(uint32_t channels,
-                                                  long power)
+  long power)
 {
   uint32_t bit = 1;
   for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
@@ -596,10 +596,10 @@ size_t RecursivePwmController::getChannelCount()
 }
 
 int RecursivePwmController::addPwm(uint32_t channels,
-                                   long delay,
-                                   long period,
-                                   long on_duration,
-                                   long count)
+  long delay,
+  long period,
+  long on_duration,
+  long count)
 {
   if (indexed_pwm_.full() || (event_controller_.eventsAvailable() < 2))
   {
@@ -620,12 +620,12 @@ int RecursivePwmController::addPwm(uint32_t channels,
   pwm_info.functor_arg = -1;
   int pwm_index = indexed_pwm_.add(pwm_info);
   EventIdPair event_id_pair = event_controller_.addPwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::setChannelsOnHandler),
-                                                                 makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::setChannelsOffHandler),
-                                                                 delay,
-                                                                 period,
-                                                                 on_duration,
-                                                                 count,
-                                                                 pwm_index);
+    makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::setChannelsOffHandler),
+    delay,
+    period,
+    on_duration,
+    count,
+    pwm_index);
   event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startPwmHandler));
   event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopPwmHandler));
   indexed_pwm_[pwm_index].event_id_pair = event_id_pair;
@@ -634,18 +634,18 @@ int RecursivePwmController::addPwm(uint32_t channels,
 }
 
 int RecursivePwmController::startPwm(uint32_t channels,
-                                     long delay,
-                                     long period,
-                                     long on_duration)
+  long delay,
+  long period,
+  long on_duration)
 {
   return addPwm(channels,delay,period,on_duration,-1);
 }
 
 int RecursivePwmController::addRecursivePwm(uint32_t channels,
-                                            long delay,
-                                            RecursivePwmValues periods,
-                                            RecursivePwmValues on_durations,
-                                            long count)
+  long delay,
+  RecursivePwmValues periods,
+  RecursivePwmValues on_durations,
+  long count)
 {
   if (indexed_pwm_.full() || (event_controller_.eventsAvailable() < 2))
   {
@@ -695,12 +695,12 @@ int RecursivePwmController::addRecursivePwm(uint32_t channels,
   if (pwm_index != constants::NO_CHILD_PWM_INDEX)
   {
     EventIdPair event_id_pair = event_controller_.addPwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startRecursivePwmHandler),
-                                                                   makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopRecursivePwmHandler),
-                                                                   delay,
-                                                                   pwm_info.period,
-                                                                   pwm_info.on_duration,
-                                                                   count,
-                                                                   pwm_index);
+      makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopRecursivePwmHandler),
+      delay,
+      pwm_info.period,
+      pwm_info.on_duration,
+      count,
+      pwm_index);
     event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startPwmHandler));
     event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopPwmHandler));
     indexed_pwm_[pwm_index].event_id_pair = event_id_pair;
@@ -711,16 +711,16 @@ int RecursivePwmController::addRecursivePwm(uint32_t channels,
 }
 
 int RecursivePwmController::startRecursivePwm(uint32_t channels,
-                                              long delay,
-                                              RecursivePwmValues periods,
-                                              RecursivePwmValues on_durations)
+  long delay,
+  RecursivePwmValues periods,
+  RecursivePwmValues on_durations)
 {
   return addRecursivePwm(channels,delay,periods,on_durations,-1);
 }
 
 void RecursivePwmController::addCountCompletedFunctor(int pwm_index,
-                                                      const Functor1<int> & functor,
-                                                      int arg)
+  const Functor1<int> & functor,
+  int arg)
 {
   if (pwm_index < 0)
   {
@@ -763,8 +763,8 @@ void RecursivePwmController::stopAllPwm()
 }
 
 void RecursivePwmController::addEventUsingDelay(const Functor1<int> & functor,
-                                                uint32_t delay,
-                                                int arg)
+  uint32_t delay,
+  int arg)
 {
   if (event_controller_.eventsAvailable() == 0)
   {
@@ -829,15 +829,15 @@ void RecursivePwmController::removeParentAndChildrenPwmInfo(int pwm_index)
 long RecursivePwmController::powerToAnalogWriteValue(long power)
 {
   long pwm_value = map(power,
-                       constants::power_min,
-                       constants::power_max,
-                       constants::channel_pwm_min,
-                       constants::channel_pwm_max);
+    constants::power_min,
+    constants::power_max,
+    constants::channel_pwm_min,
+    constants::channel_pwm_max);
   long analog_write_value = map(pwm_value,
-                                constants::channel_pwm_min,
-                                constants::channel_pwm_max,
-                                constants::analog_write_min,
-                                constants::analog_write_max);
+    constants::channel_pwm_min,
+    constants::channel_pwm_max,
+    constants::analog_write_min,
+    constants::analog_write_max);
   return analog_write_value;
 }
 
@@ -1368,7 +1368,7 @@ void RecursivePwmController::getPwmInfoHandler()
 {
   noInterrupts();
   IndexedContainer<constants::PwmInfo,
-                   constants::INDEXED_PWM_COUNT_MAX> indexed_pwm = indexed_pwm_;
+    constants::INDEXED_PWM_COUNT_MAX> indexed_pwm = indexed_pwm_;
   interrupts();
 
   uint32_t bit = 1;
@@ -1436,11 +1436,11 @@ void RecursivePwmController::startRecursivePwmHandler(int pwm_index)
     long period = indexed_pwm_[child_index].period;
     long on_duration = indexed_pwm_[child_index].on_duration;
     EventIdPair event_id_pair = event_controller_.addInfinitePwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startRecursivePwmHandler),
-                                                                           makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopRecursivePwmHandler),
-                                                                           delay,
-                                                                           period,
-                                                                           on_duration,
-                                                                           child_index);
+      makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopRecursivePwmHandler),
+      delay,
+      period,
+      on_duration,
+      child_index);
     event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::startPwmHandler));
     event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&RecursivePwmController::stopPwmHandler));
     indexed_pwm_[child_index].event_id_pair = event_id_pair;
