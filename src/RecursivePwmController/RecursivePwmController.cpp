@@ -61,7 +61,7 @@ void RecursivePwmController::setup()
   modular_server::Property & power_max_property = modular_server_.createProperty(constants::power_max_property_name,constants::power_max_default);
   power_max_property.setRange(constants::power_min,constants::power_max);
   power_max_property.setUnits(constants::percent_units);
-  power_max_property.attachPostSetElementValueFunctor(makeFunctor((Functor1<const size_t> *)0,*this,&RecursivePwmController::setPowerMaxHandler));
+  power_max_property.attachPostSetElementValueFunctor(makeFunctor((Functor1<size_t> *)0,*this,&RecursivePwmController::setPowerMaxHandler));
 
   setPowersToMax();
 
@@ -888,7 +888,9 @@ void RecursivePwmController::initializePwmIndexes()
   interrupts();
 }
 
-void RecursivePwmController::setChannelPwmIndexesRunning(size_t channel, size_t level, int pwm_index)
+void RecursivePwmController::setChannelPwmIndexesRunning(size_t channel,
+  size_t level,
+  int pwm_index)
 {
   if ((channel < constants::CHANNEL_COUNT_MAX) && (level < constants::PWM_LEVEL_COUNT_MAX))
   {
@@ -898,7 +900,9 @@ void RecursivePwmController::setChannelPwmIndexesRunning(size_t channel, size_t 
   }
 }
 
-void RecursivePwmController::setChannelsPwmIndexesRunning(uint32_t channels, size_t level, int pwm_index)
+void RecursivePwmController::setChannelsPwmIndexesRunning(uint32_t channels,
+  size_t level,
+  int pwm_index)
 {
   if (level < constants::PWM_LEVEL_COUNT_MAX)
   {
@@ -915,7 +919,8 @@ void RecursivePwmController::setChannelsPwmIndexesRunning(uint32_t channels, siz
   }
 }
 
-void RecursivePwmController::setChannelPwmIndexesStopped(size_t channel, size_t level)
+void RecursivePwmController::setChannelPwmIndexesStopped(size_t channel,
+  size_t level)
 {
   if ((channel < constants::CHANNEL_COUNT_MAX) && (level < constants::PWM_LEVEL_COUNT_MAX))
   {
@@ -925,7 +930,8 @@ void RecursivePwmController::setChannelPwmIndexesStopped(size_t channel, size_t 
   }
 }
 
-void RecursivePwmController::setChannelsPwmIndexesStopped(uint32_t channels, size_t level)
+void RecursivePwmController::setChannelsPwmIndexesStopped(uint32_t channels,
+  size_t level)
 {
   if (level < constants::PWM_LEVEL_COUNT_MAX)
   {

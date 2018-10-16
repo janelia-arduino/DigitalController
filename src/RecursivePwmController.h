@@ -132,10 +132,16 @@ private:
   void updateAllChannels();
 
   void initializePwmIndexes();
-  void setChannelPwmIndexesRunning(size_t channel, size_t level, int pwm_index);
-  void setChannelsPwmIndexesRunning(uint32_t channels, size_t level, int pwm_index);
-  void setChannelPwmIndexesStopped(size_t channel, size_t level);
-  void setChannelsPwmIndexesStopped(uint32_t channels, size_t level);
+  void setChannelPwmIndexesRunning(size_t channel,
+    size_t level,
+    int pwm_index);
+  void setChannelsPwmIndexesRunning(uint32_t channels,
+    size_t level,
+    int pwm_index);
+  void setChannelPwmIndexesStopped(size_t channel,
+    size_t level);
+  void setChannelsPwmIndexesStopped(uint32_t channels,
+    size_t level);
 
   void returnPwmIndexResponse(int pwm_index);
 
