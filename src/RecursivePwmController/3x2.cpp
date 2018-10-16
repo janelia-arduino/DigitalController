@@ -14,26 +14,12 @@ namespace recursive_pwm_controller
 {
 namespace constants
 {
-const modular_server::HardwareInfo hardware_info =
-{
-  .name_ptr=&hardware_name,
-  .part_number=1211,
-  .version_major=1,
-  .version_minor=0,
-};
-
 const size_t enable_pin = 2;
 
-const size_t signal_pins[CHANNEL_COUNT] =
+const size_t signal_pins[CHANNEL_COUNT_MAX] =
 {
   3,
   4,
-};
-
-const size_t fault_pins[CHANNEL_COUNT] =
-{
-  5,
-  6,
 };
 
 // Pins
@@ -41,7 +27,7 @@ const size_t fault_pins[CHANNEL_COUNT] =
 // Units
 
 // Properties
-const long power_max_default[CHANNEL_COUNT] =
+const long power_max_default[CHANNEL_COUNT_MAX] =
 {
   100,
   100,

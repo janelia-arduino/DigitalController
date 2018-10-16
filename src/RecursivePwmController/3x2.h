@@ -17,23 +17,20 @@ namespace recursive_pwm_controller
 namespace constants
 {
 //MAX values must be >= 1, >= created/copied count, < RAM limit
-enum{PIN_COUNT_MAX=1};
-
-enum {CHANNEL_COUNT=2};
+enum {CHANNEL_COUNT_MAX=2};
 
 enum{EVENT_COUNT_MAX=36};
 enum{INDEXED_PWM_COUNT_MAX=16};
 
 enum{PWM_LEVEL_COUNT_MAX=4};
 
-extern const size_t signal_pins[CHANNEL_COUNT];
-extern const size_t fault_pins[CHANNEL_COUNT];
+extern const size_t signal_pins[CHANNEL_COUNT_MAX];
 
 // Units
 
 // Properties
 // Property values must be long, double, bool, long[], double[], bool[], char[], ConstantString *, (ConstantString *)[]
-extern const long power_max_default[CHANNEL_COUNT];
+extern const long power_max_default[CHANNEL_COUNT_MAX];
 
 // Parameters
 

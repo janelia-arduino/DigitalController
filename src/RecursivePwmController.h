@@ -34,67 +34,67 @@ public:
   void disableAll();
   bool enabled();
 
-  long setPowerWhenOn(const size_t channel,
-                      const long power);
-  long getPowerWhenOn(const size_t channel);
-  long getPower(const size_t channel);
+  long setPowerWhenOn(size_t channel,
+                      long power);
+  long getPowerWhenOn(size_t channel);
+  long getPower(size_t channel);
 
-  void setChannels(const uint32_t channels);
-  void setChannelOn(const size_t channel);
-  void setChannelOnAtPower(const size_t channel,
-                           const long power);
-  void setChannelOff(const size_t channel);
-  void setChannelsOn(const uint32_t channels);
-  void setChannelsOnAtPower(const uint32_t channels,
-                            const long power);
-  void setChannelsOff(const uint32_t channels);
-  void toggleChannel(const size_t channel);
-  void toggleChannels(const uint32_t channels);
+  void setChannels(uint32_t channels);
+  void setChannelOn(size_t channel);
+  void setChannelOnAtPower(size_t channel,
+                           long power);
+  void setChannelOff(size_t channel);
+  void setChannelsOn(uint32_t channels);
+  void setChannelsOnAtPower(uint32_t channels,
+                            long power);
+  void setChannelsOff(uint32_t channels);
+  void toggleChannel(size_t channel);
+  void toggleChannels(uint32_t channels);
   void toggleAllChannels();
   void setAllChannelsOn();
   void setAllChannelsOff();
-  void setChannelOnAllOthersOff(const size_t channel);
-  void setChannelOffAllOthersOn(const size_t channel);
-  void setChannelsOnAllOthersOff(const uint32_t channels);
-  void setChannelsOffAllOthersOn(const uint32_t channels);
-  bool channelIsOn(const size_t channel);
+  void setChannelOnAllOthersOff(size_t channel);
+  void setChannelOffAllOthersOn(size_t channel);
+  void setChannelsOnAllOthersOff(uint32_t channels);
+  void setChannelsOffAllOthersOn(uint32_t channels);
+  bool channelIsOn(size_t channel);
   uint32_t getChannelsOn();
   size_t getChannelCount();
 
-  int addPwm(const uint32_t channels,
-             const long delay,
-             const long period,
-             const long on_duration,
-             const long count);
-  int startPwm(const uint32_t channels,
-               const long delay,
-               const long period,
-               const long on_duration);
+  int addPwm(uint32_t channels,
+             long delay,
+             long period,
+             long on_duration,
+             long count);
+  int startPwm(uint32_t channels,
+               long delay,
+               long period,
+               long on_duration);
 
   typedef Array<long,recursive_pwm_controller::constants::PWM_LEVEL_COUNT_MAX> RecursivePwmValues;
 
-  int addRecursivePwm(const uint32_t channels,
-                      const long delay,
+  int addRecursivePwm(uint32_t channels,
+                      long delay,
                       RecursivePwmValues periods,
                       RecursivePwmValues on_durations,
-                      const long count);
-  int startRecursivePwm(const uint32_t channels,
-                        const long delay,
+                      long count);
+  int startRecursivePwm(uint32_t channels,
+                        long delay,
                         RecursivePwmValues periods,
                         RecursivePwmValues on_durations);
 
-  void addCountCompletedFunctor(const int pwm_index,
+  void addCountCompletedFunctor(int pwm_index,
                                 const Functor1<int> & functor,
-                                const int arg=-1);
+                                int arg=-1);
 
-  void stopPwm(const int pwm_index);
+  void stopPwm(int pwm_index);
   void stopAllPwm();
 
   void addEventUsingDelay(const Functor1<int> & functor,
-                          const uint32_t delay,
-                          const int arg=-1);
+                          uint32_t delay,
+                          int arg=-1);
 
-  typedef Array<RecursivePwmValues,recursive_pwm_controller::constants::CHANNEL_COUNT> ChannelsPwmIndexes;
+  typedef Array<RecursivePwmValues,recursive_pwm_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
   ChannelsPwmIndexes getChannelsPwmIndexes();
 
   uint32_t arrayToChannels(ArduinoJson::JsonArray & channels_array);
@@ -105,8 +105,6 @@ public:
   virtual void stopPwmHandler(int pwm_index);
 
 private:
-  modular_server::Pin pins_[recursive_pwm_controller::constants::PIN_COUNT_MAX];
-
   modular_server::Property properties_[recursive_pwm_controller::constants::PROPERTY_COUNT_MAX];
   modular_server::Parameter parameters_[recursive_pwm_controller::constants::PARAMETER_COUNT_MAX];
   modular_server::Function functions_[recursive_pwm_controller::constants::FUNCTION_COUNT_MAX];
@@ -114,9 +112,9 @@ private:
 
   bool enabled_;
   uint32_t channels_;
-  long powers_when_on_[recursive_pwm_controller::constants::CHANNEL_COUNT];
-  long powers_[recursive_pwm_controller::constants::CHANNEL_COUNT];
-  long channels_pwm_indexes_[recursive_pwm_controller::constants::CHANNEL_COUNT][recursive_pwm_controller::constants::PWM_LEVEL_COUNT_MAX];
+  long powers_when_on_[recursive_pwm_controller::constants::CHANNEL_COUNT_MAX];
+  long powers_[recursive_pwm_controller::constants::CHANNEL_COUNT_MAX];
+  long channels_pwm_indexes_[recursive_pwm_controller::constants::CHANNEL_COUNT_MAX][recursive_pwm_controller::constants::PWM_LEVEL_COUNT_MAX];
 
   EventController<recursive_pwm_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
@@ -125,12 +123,12 @@ private:
 
   const Functor1<int> functor_dummy_;
 
-  void removeParentAndChildrenPwmInfo(const int pwm_index);
+  void removeParentAndChildrenPwmInfo(int pwm_index);
 
-  long powerToAnalogWriteValue(const long power);
+  long powerToAnalogWriteValue(long power);
   void setPowersToMax();
 
-  void updateChannel(const size_t channel);
+  void updateChannel(size_t channel);
   void updateAllChannels();
 
   void initializePwmIndexes();
@@ -142,7 +140,7 @@ private:
   void returnPwmIndexResponse(int pwm_index);
 
   // Handlers
-  void setPowerMaxHandler(const size_t channel);
+  void setPowerMaxHandler(size_t channel);
   void enableAllHandler();
   void disableAllHandler();
   void enabledHandler();

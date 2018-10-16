@@ -34,10 +34,9 @@ void RecursivePwmController::setup()
   pinMode(constants::enable_pin,OUTPUT);
   enableAll();
 
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     pinMode(constants::signal_pins[channel],OUTPUT);
-    pinMode(constants::fault_pins[channel],INPUT);
   }
   channels_ = 0;
   setAllChannelsOff();
@@ -51,8 +50,6 @@ void RecursivePwmController::setup()
   modular_server_.setDeviceName(constants::device_name);
 
   // Add Hardware
-  modular_server_.addHardware(constants::hardware_info,
-                              pins_);
 
   // Add Firmware
   modular_server_.addFirmware(constants::firmware_info,
@@ -70,11 +67,11 @@ void RecursivePwmController::setup()
 
   // Parameters
   modular_server::Parameter & channel_parameter = modular_server_.createParameter(constants::channel_parameter_name);
-  channel_parameter.setRange(0,constants::CHANNEL_COUNT-1);
+  channel_parameter.setRange(0,constants::CHANNEL_COUNT_MAX-1);
 
   modular_server::Parameter & channels_parameter = modular_server_.createParameter(constants::channels_parameter_name);
-  channels_parameter.setRange(0,constants::CHANNEL_COUNT-1);
-  channels_parameter.setArrayLengthRange(1,constants::CHANNEL_COUNT);
+  channels_parameter.setRange(0,constants::CHANNEL_COUNT_MAX-1);
+  channels_parameter.setArrayLengthRange(1,constants::CHANNEL_COUNT_MAX);
 
   modular_server::Parameter & power_parameter = modular_server_.createParameter(constants::power_parameter_name);
   power_parameter.setRange(constants::power_min,constants::power_max);
@@ -82,7 +79,7 @@ void RecursivePwmController::setup()
 
   modular_server::Parameter & powers_parameter = modular_server_.createParameter(constants::powers_parameter_name);
   powers_parameter.setRange(constants::power_min,constants::power_max);
-  powers_parameter.setArrayLengthRange(constants::CHANNEL_COUNT,constants::CHANNEL_COUNT);
+  powers_parameter.setArrayLengthRange(constants::CHANNEL_COUNT_MAX,constants::CHANNEL_COUNT_MAX);
   powers_parameter.setUnits(constants::percent_units);
 
   modular_server::Parameter & delay_parameter = modular_server_.createParameter(constants::delay_parameter_name);
@@ -307,11 +304,11 @@ bool RecursivePwmController::enabled()
   return enabled_;
 }
 
-long RecursivePwmController::setPowerWhenOn(const size_t channel,
-                                               const long power)
+long RecursivePwmController::setPowerWhenOn(size_t channel,
+                                            long power)
 {
   long power_to_set = 0;
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     power_to_set = power;
     if (power_to_set < constants::power_min)
@@ -336,10 +333,10 @@ long RecursivePwmController::setPowerWhenOn(const size_t channel,
   return power_to_set;
 }
 
-long RecursivePwmController::getPowerWhenOn(const size_t channel)
+long RecursivePwmController::getPowerWhenOn(size_t channel)
 {
   long power = constants::power_min;
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     noInterrupts();
     power = powers_when_on_[channel];
@@ -348,10 +345,10 @@ long RecursivePwmController::getPowerWhenOn(const size_t channel)
   return power;
 }
 
-long RecursivePwmController::getPower(const size_t channel)
+long RecursivePwmController::getPower(size_t channel)
 {
   long power = constants::power_min;
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     noInterrupts();
     power = powers_[channel];
@@ -360,10 +357,10 @@ long RecursivePwmController::getPower(const size_t channel)
   return power;
 }
 
-void RecursivePwmController::setChannels(const uint32_t channels)
+void RecursivePwmController::setChannels(uint32_t channels)
 {
   uint32_t bit = 1;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     if ((bit << channel) & channels)
     {
@@ -376,9 +373,9 @@ void RecursivePwmController::setChannels(const uint32_t channels)
   }
 }
 
-void RecursivePwmController::setChannelOn(const size_t channel)
+void RecursivePwmController::setChannelOn(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -401,10 +398,10 @@ void RecursivePwmController::setChannelOn(const size_t channel)
   }
 }
 
-void RecursivePwmController::setChannelOnAtPower(const size_t channel,
-                                                    const long power)
+void RecursivePwmController::setChannelOnAtPower(size_t channel,
+                                                 long power)
 {
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -424,9 +421,9 @@ void RecursivePwmController::setChannelOnAtPower(const size_t channel,
   }
 }
 
-void RecursivePwmController::setChannelOff(const size_t channel)
+void RecursivePwmController::setChannelOff(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -439,10 +436,10 @@ void RecursivePwmController::setChannelOff(const size_t channel)
   }
 }
 
-void RecursivePwmController::setChannelsOn(const uint32_t channels)
+void RecursivePwmController::setChannelsOn(uint32_t channels)
 {
   uint32_t bit = 1;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     if ((bit << channel) & channels)
     {
@@ -451,11 +448,11 @@ void RecursivePwmController::setChannelsOn(const uint32_t channels)
   }
 }
 
-void RecursivePwmController::setChannelsOnAtPower(const uint32_t channels,
-                                                     const long power)
+void RecursivePwmController::setChannelsOnAtPower(uint32_t channels,
+                                                  long power)
 {
   uint32_t bit = 1;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     if ((bit << channel) & channels)
     {
@@ -464,10 +461,10 @@ void RecursivePwmController::setChannelsOnAtPower(const uint32_t channels,
   }
 }
 
-void RecursivePwmController::setChannelsOff(const uint32_t channels)
+void RecursivePwmController::setChannelsOff(uint32_t channels)
 {
   uint32_t bit = 1;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     if ((bit << channel) & channels)
     {
@@ -476,9 +473,9 @@ void RecursivePwmController::setChannelsOff(const uint32_t channels)
   }
 }
 
-void RecursivePwmController::toggleChannel(const size_t channel)
+void RecursivePwmController::toggleChannel(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -497,7 +494,7 @@ void RecursivePwmController::toggleChannel(const size_t channel)
   }
 }
 
-void RecursivePwmController::toggleChannels(const uint32_t channels)
+void RecursivePwmController::toggleChannels(uint32_t channels)
 {
   noInterrupts();
   channels_ ^= channels;
@@ -515,7 +512,7 @@ void RecursivePwmController::toggleAllChannels()
 
 void RecursivePwmController::setAllChannelsOn()
 {
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     setChannelOn(channel);
   }
@@ -523,15 +520,15 @@ void RecursivePwmController::setAllChannelsOn()
 
 void RecursivePwmController::setAllChannelsOff()
 {
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     setChannelOff(channel);
   }
 }
 
-void RecursivePwmController::setChannelOnAllOthersOff(const size_t channel)
+void RecursivePwmController::setChannelOnAllOthersOff(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -542,9 +539,9 @@ void RecursivePwmController::setChannelOnAllOthersOff(const size_t channel)
   }
 }
 
-void RecursivePwmController::setChannelOffAllOthersOn(const size_t channel)
+void RecursivePwmController::setChannelOffAllOthersOn(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -555,7 +552,7 @@ void RecursivePwmController::setChannelOffAllOthersOn(const size_t channel)
   }
 }
 
-void RecursivePwmController::setChannelsOnAllOthersOff(const uint32_t channels)
+void RecursivePwmController::setChannelsOnAllOthersOff(uint32_t channels)
 {
   noInterrupts();
   channels_ = channels;
@@ -563,7 +560,7 @@ void RecursivePwmController::setChannelsOnAllOthersOff(const uint32_t channels)
   setChannels(channels_);
 }
 
-void RecursivePwmController::setChannelsOffAllOthersOn(const uint32_t channels)
+void RecursivePwmController::setChannelsOffAllOthersOn(uint32_t channels)
 {
   noInterrupts();
   channels_ = ~channels;
@@ -571,10 +568,10 @@ void RecursivePwmController::setChannelsOffAllOthersOn(const uint32_t channels)
   setChannels(channels_);
 }
 
-bool RecursivePwmController::channelIsOn(const size_t channel)
+bool RecursivePwmController::channelIsOn(size_t channel)
 {
   bool channel_is_on = false;
-  if (channel < constants::CHANNEL_COUNT)
+  if (channel < constants::CHANNEL_COUNT_MAX)
   {
     noInterrupts();
     uint32_t channels = channels_;
@@ -595,14 +592,14 @@ uint32_t RecursivePwmController::getChannelsOn()
 
 size_t RecursivePwmController::getChannelCount()
 {
-  return constants::CHANNEL_COUNT;
+  return constants::CHANNEL_COUNT_MAX;
 }
 
-int RecursivePwmController::addPwm(const uint32_t channels,
-                                      const long delay,
-                                      const long period,
-                                      const long on_duration,
-                                      const long count)
+int RecursivePwmController::addPwm(uint32_t channels,
+                                   long delay,
+                                   long period,
+                                   long on_duration,
+                                   long count)
 {
   if (indexed_pwm_.full() || (event_controller_.eventsAvailable() < 2))
   {
@@ -636,19 +633,19 @@ int RecursivePwmController::addPwm(const uint32_t channels,
   return pwm_index;
 }
 
-int RecursivePwmController::startPwm(const uint32_t channels,
-                                        const long delay,
-                                        const long period,
-                                        const long on_duration)
+int RecursivePwmController::startPwm(uint32_t channels,
+                                     long delay,
+                                     long period,
+                                     long on_duration)
 {
   return addPwm(channels,delay,period,on_duration,-1);
 }
 
-int RecursivePwmController::addRecursivePwm(const uint32_t channels,
-                                               const long delay,
-                                               RecursivePwmValues periods,
-                                               RecursivePwmValues on_durations,
-                                               const long count)
+int RecursivePwmController::addRecursivePwm(uint32_t channels,
+                                            long delay,
+                                            RecursivePwmValues periods,
+                                            RecursivePwmValues on_durations,
+                                            long count)
 {
   if (indexed_pwm_.full() || (event_controller_.eventsAvailable() < 2))
   {
@@ -713,17 +710,17 @@ int RecursivePwmController::addRecursivePwm(const uint32_t channels,
   return pwm_index;
 }
 
-int RecursivePwmController::startRecursivePwm(const uint32_t channels,
-                                                 const long delay,
-                                                 RecursivePwmValues periods,
-                                                 RecursivePwmValues on_durations)
+int RecursivePwmController::startRecursivePwm(uint32_t channels,
+                                              long delay,
+                                              RecursivePwmValues periods,
+                                              RecursivePwmValues on_durations)
 {
   return addRecursivePwm(channels,delay,periods,on_durations,-1);
 }
 
-void RecursivePwmController::addCountCompletedFunctor(const int pwm_index,
-                                                         const Functor1<int> & functor,
-                                                         const int arg)
+void RecursivePwmController::addCountCompletedFunctor(int pwm_index,
+                                                      const Functor1<int> & functor,
+                                                      int arg)
 {
   if (pwm_index < 0)
   {
@@ -737,7 +734,7 @@ void RecursivePwmController::addCountCompletedFunctor(const int pwm_index,
   }
 }
 
-void RecursivePwmController::stopPwm(const int pwm_index)
+void RecursivePwmController::stopPwm(int pwm_index)
 {
   if (pwm_index < 0)
   {
@@ -766,8 +763,8 @@ void RecursivePwmController::stopAllPwm()
 }
 
 void RecursivePwmController::addEventUsingDelay(const Functor1<int> & functor,
-                                                   const uint32_t delay,
-                                                   const int arg)
+                                                uint32_t delay,
+                                                int arg)
 {
   if (event_controller_.eventsAvailable() == 0)
   {
@@ -781,7 +778,7 @@ RecursivePwmController::ChannelsPwmIndexes RecursivePwmController::getChannelsPw
 {
   ChannelsPwmIndexes channels_pwm_indexes;
   noInterrupts();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     RecursivePwmValues channel_pwm_indexes(channels_pwm_indexes_[channel]);
     channels_pwm_indexes.push_back(channel_pwm_indexes);
@@ -817,7 +814,7 @@ RecursivePwmController::RecursivePwmValues RecursivePwmController::arrayToRecurs
   return pwm_values;
 }
 
-void RecursivePwmController::removeParentAndChildrenPwmInfo(const int pwm_index)
+void RecursivePwmController::removeParentAndChildrenPwmInfo(int pwm_index)
 {
   if (pwm_index >= 0)
   {
@@ -829,7 +826,7 @@ void RecursivePwmController::removeParentAndChildrenPwmInfo(const int pwm_index)
   }
 }
 
-long RecursivePwmController::powerToAnalogWriteValue(const long power)
+long RecursivePwmController::powerToAnalogWriteValue(long power)
 {
   long pwm_value = map(power,
                        constants::power_min,
@@ -848,7 +845,7 @@ void RecursivePwmController::setPowersToMax()
 {
   modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
   long power_max;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     power_max_property.getElementValue(channel,power_max);
     noInterrupts();
@@ -857,7 +854,7 @@ void RecursivePwmController::setPowersToMax()
   }
 }
 
-void RecursivePwmController::updateChannel(const size_t channel)
+void RecursivePwmController::updateChannel(size_t channel)
 {
   uint32_t bit = 1;
   bit = bit << channel;
@@ -881,7 +878,7 @@ void RecursivePwmController::updateAllChannels()
 void RecursivePwmController::initializePwmIndexes()
 {
   noInterrupts();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     for (size_t level=0; level<constants::PWM_LEVEL_COUNT_MAX; ++level)
     {
@@ -893,7 +890,7 @@ void RecursivePwmController::initializePwmIndexes()
 
 void RecursivePwmController::setChannelPwmIndexesRunning(size_t channel, size_t level, int pwm_index)
 {
-  if ((channel < constants::CHANNEL_COUNT) && (level < constants::PWM_LEVEL_COUNT_MAX))
+  if ((channel < constants::CHANNEL_COUNT_MAX) && (level < constants::PWM_LEVEL_COUNT_MAX))
   {
     noInterrupts();
     channels_pwm_indexes_[channel][level] = pwm_index;
@@ -907,7 +904,7 @@ void RecursivePwmController::setChannelsPwmIndexesRunning(uint32_t channels, siz
   {
     uint32_t bit = 1;
     noInterrupts();
-    for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+    for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
     {
       if ((bit << channel) & channels)
       {
@@ -920,7 +917,7 @@ void RecursivePwmController::setChannelsPwmIndexesRunning(uint32_t channels, siz
 
 void RecursivePwmController::setChannelPwmIndexesStopped(size_t channel, size_t level)
 {
-  if ((channel < constants::CHANNEL_COUNT) && (level < constants::PWM_LEVEL_COUNT_MAX))
+  if ((channel < constants::CHANNEL_COUNT_MAX) && (level < constants::PWM_LEVEL_COUNT_MAX))
   {
     noInterrupts();
     channels_pwm_indexes_[channel][level] = constants::PWM_NOT_RUNNING_INDEX;
@@ -934,7 +931,7 @@ void RecursivePwmController::setChannelsPwmIndexesStopped(uint32_t channels, siz
   {
     uint32_t bit = 1;
     noInterrupts();
-    for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+    for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
     {
       if ((bit << channel) & channels)
       {
@@ -1016,7 +1013,7 @@ void RecursivePwmController::stopPwmHandler(int pwm_index)
   }
 }
 
-void RecursivePwmController::setPowerMaxHandler(const size_t channel)
+void RecursivePwmController::setPowerMaxHandler(size_t channel)
 {
   modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
   long power_max;
@@ -1087,7 +1084,7 @@ void RecursivePwmController::setAllPowersWhenOnHandler()
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
 
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     long power = setPowerWhenOn(channel,power_to_set);
     modular_server_.response().write(power);
@@ -1101,7 +1098,7 @@ void RecursivePwmController::getPowersWhenOnHandler()
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
   long power;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     power = getPowerWhenOn(channel);
     modular_server_.response().write(power);
@@ -1114,7 +1111,7 @@ void RecursivePwmController::getPowersHandler()
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
   long power;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     power = getPower(channel);
     modular_server_.response().write(power);
@@ -1245,7 +1242,7 @@ void RecursivePwmController::getChannelsOnHandler()
   uint32_t bit = 1;
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     if (channels_on & (bit << channel))
     {
@@ -1262,7 +1259,7 @@ void RecursivePwmController::getChannelsOffHandler()
   uint32_t bit = 1;
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     if (channels_off & (bit << channel))
     {
@@ -1351,7 +1348,7 @@ void RecursivePwmController::getChannelsPwmIndexesHandler()
   modular_server_.response().beginArray();
 
   ChannelsPwmIndexes channels_pwm_indexes = getChannelsPwmIndexes();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
   {
     modular_server_.response().beginArray();
 
@@ -1388,7 +1385,7 @@ void RecursivePwmController::getPwmInfoHandler()
       modular_server_.response().write(constants::pwm_index_parameter_name,i);
       modular_server_.response().writeKey(constants::channels_parameter_name);
       modular_server_.response().beginArray();
-      for (size_t channel=0; channel<constants::CHANNEL_COUNT; ++channel)
+      for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
       {
         if ((bit << channel) & pwm_info.channels)
         {

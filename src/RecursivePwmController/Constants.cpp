@@ -24,8 +24,6 @@ const modular_server::FirmwareInfo firmware_info =
   .version_patch=4,
 };
 
-CONSTANT_STRING(hardware_name,"recursive_pwm_controller");
-
 const long analog_write_min = 0;
 const long analog_write_max = 255;
 // BTS3256D max switching frequency = 12kHz

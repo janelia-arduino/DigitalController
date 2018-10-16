@@ -37,9 +37,6 @@ extern ConstantString device_name;
 extern ConstantString firmware_name;
 extern const modular_server::FirmwareInfo firmware_info;
 
-extern ConstantString hardware_name;
-extern const modular_server::HardwareInfo hardware_info;
-
 extern const size_t enable_pin;
 
 extern const long analog_write_min;
