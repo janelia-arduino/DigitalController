@@ -24,8 +24,8 @@ const modular_server::FirmwareInfo firmware_info =
   .version_patch=0,
 };
 
-const long analog_write_min = 0;
-const long analog_write_max = 255;
+const long high_frequency_duty_cycle_min = 0;
+const long high_frequency_duty_cycle_max = 255;
 // BTS3256D max switching frequency = 12kHz
 // PWM frequency = 488.28Hz
 // 12kHz/488.28 = 24.576 -> 24
@@ -89,7 +89,7 @@ CONSTANT_STRING(on_durations_parameter_name,"on_durations");
 // Functions
 CONSTANT_STRING(enable_all_function_name,"enableAll");
 CONSTANT_STRING(disable_all_function_name,"disableAll");
-CONSTANT_STRING(enabled_function_name,"enabled");
+CONSTANT_STRING(all_enabled_function_name,"allEnabled");
 CONSTANT_STRING(set_power_when_on_function_name,"setPowerWhenOn");
 CONSTANT_STRING(set_powers_when_on_function_name,"setPowersWhenOn");
 CONSTANT_STRING(set_all_powers_when_on_function_name,"setAllPowersWhenOn");

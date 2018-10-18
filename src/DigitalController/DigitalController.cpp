@@ -10,15 +10,6 @@
 
 using namespace digital_controller;
 
-DigitalController::DigitalController()
-{
-}
-
-DigitalController::~DigitalController()
-{
-  disableAll();
-}
-
 void DigitalController::setup()
 {
   // Parent Setup
@@ -27,27 +18,19 @@ void DigitalController::setup()
   // Reset Watchdog
   resetWatchdog();
 
+  // Variable Setup
+  channels_ = 0;
+  initializePwmIndexes();
+
   // Event Controller Setup
   event_controller_.setup();
 
-  // Pin Setup
-  pinMode(constants::enable_pin,OUTPUT);
-  enableAll();
-
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
-  {
-    pinMode(constants::signal_pins[channel],OUTPUT);
-  }
-  channels_ = 0;
-  setAllChannelsOff();
-
-  // PWM Indexes
-  initializePwmIndexes();
-
-  // Pins
-
   // Set Device ID
   modular_server_.setDeviceName(constants::device_name);
+
+  // Pin Setup
+
+  // Pins
 
   // Add Hardware
 
@@ -126,9 +109,9 @@ void DigitalController::setup()
   modular_server::Function & disable_all_function = modular_server_.createFunction(constants::disable_all_function_name);
   disable_all_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::disableAllHandler));
 
-  modular_server::Function & enabled_function = modular_server_.createFunction(constants::enabled_function_name);
-  enabled_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::enabledHandler));
-  enabled_function.setResultTypeBool();
+  modular_server::Function & all_enabled_function = modular_server_.createFunction(constants::all_enabled_function_name);
+  all_enabled_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::allEnabledHandler));
+  all_enabled_function.setResultTypeBool();
 
   modular_server::Function & set_power_when_on_function = modular_server_.createFunction(constants::set_power_when_on_function_name);
   set_power_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setPowerWhenOnHandler));
@@ -292,19 +275,17 @@ void DigitalController::setup()
 
 void DigitalController::enableAll()
 {
-  digitalWrite(constants::enable_pin,LOW);
-  enabled_ = true;
+  all_enabled_ = true;
 }
 
 void DigitalController::disableAll()
 {
-  digitalWrite(constants::enable_pin,HIGH);
-  enabled_ = false;
+  all_enabled_ = false;
 }
 
-bool DigitalController::enabled()
+bool DigitalController::allEnabled()
 {
-  return enabled_;
+  return all_enabled_;
 }
 
 long DigitalController::setPowerWhenOn(size_t channel,
@@ -391,11 +372,11 @@ void DigitalController::setChannelOn(size_t channel)
       setChannelOff(channel);
       return;
     }
-    long analog_write_value = powerToAnalogWriteValue(power);
+    long high_frequency_duty_cycle = powerToHighFrequencyDutyCycle(power);
 
     noInterrupts();
     channels_ |= bit;
-    analogWrite(constants::signal_pins[channel],analog_write_value);
+    setChannelOnAtHighFrequency(channel,high_frequency_duty_cycle);
     powers_[channel] = power;
     interrupts();
   }
@@ -414,11 +395,11 @@ void DigitalController::setChannelOnAtPower(size_t channel,
       setChannelOff(channel);
       return;
     }
-    long analog_write_value = powerToAnalogWriteValue(power);
+    long high_frequency_duty_cycle = powerToHighFrequencyDutyCycle(power);
 
     noInterrupts();
     channels_ |= bit;
-    analogWrite(constants::signal_pins[channel],analog_write_value);
+    setChannelOnAtHighFrequency(channel,high_frequency_duty_cycle);
     powers_[channel] = power;
     interrupts();
   }
@@ -433,7 +414,7 @@ void DigitalController::setChannelOff(size_t channel)
 
     noInterrupts();
     channels_ &= ~bit;
-    analogWrite(constants::signal_pins[channel],constants::analog_write_min);
+    setChannelOnAtHighFrequency(channel,constants::high_frequency_duty_cycle_min);
     powers_[channel] = constants::power_min;
     interrupts();
   }
@@ -832,19 +813,19 @@ void DigitalController::removeParentAndChildrenPwmInfo(int pwm_index)
   }
 }
 
-long DigitalController::powerToAnalogWriteValue(long power)
+long DigitalController::powerToHighFrequencyDutyCycle(long power)
 {
   long pwm_value = map(power,
     constants::power_min,
     constants::power_max,
     constants::channel_pwm_min,
     constants::channel_pwm_max);
-  long analog_write_value = map(pwm_value,
+  long high_frequency_duty_cycle = map(pwm_value,
     constants::channel_pwm_min,
     constants::channel_pwm_max,
-    constants::analog_write_min,
-    constants::analog_write_max);
-  return analog_write_value;
+    constants::high_frequency_duty_cycle_min,
+    constants::high_frequency_duty_cycle_max);
+  return high_frequency_duty_cycle;
 }
 
 void DigitalController::setPowersToMax()
@@ -1025,6 +1006,11 @@ void DigitalController::stopPwmHandler(int pwm_index)
   }
 }
 
+void DigitalController::setChannelOnAtHighFrequency(size_t channel,
+  long high_frequency_duty_cycle)
+{
+}
+
 void DigitalController::setChannelCountHandler()
 {
   long channel_count = getChannelCount();
@@ -1070,9 +1056,9 @@ void DigitalController::disableAllHandler()
   disableAll();
 }
 
-void DigitalController::enabledHandler()
+void DigitalController::allEnabledHandler()
 {
-  bool all_enabled = enabled();
+  bool all_enabled = allEnabled();
   modular_server_.response().returnResult(all_enabled);
 }
 

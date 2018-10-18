@@ -26,13 +26,11 @@
 class DigitalController : public ModularDeviceBase
 {
 public:
-  DigitalController();
-  ~DigitalController();
   virtual void setup();
 
   void enableAll();
   void disableAll();
-  bool enabled();
+  bool allEnabled();
 
   long setPowerWhenOn(size_t channel,
     long power);
@@ -105,6 +103,8 @@ public:
   virtual void stopPwmHandler(int pwm_index);
 
 protected:
+  virtual void setChannelOnAtHighFrequency(size_t channel,
+    long high_frequency_duty_cycle);
 
   // Handlers
   void setChannelCountHandler();
@@ -115,7 +115,7 @@ private:
   modular_server::Function functions_[digital_controller::constants::FUNCTION_COUNT_MAX];
   modular_server::Callback callbacks_[digital_controller::constants::CALLBACK_COUNT_MAX];
 
-  bool enabled_;
+  bool all_enabled_;
   uint32_t channels_;
   long powers_when_on_[digital_controller::constants::CHANNEL_COUNT_MAX];
   long powers_[digital_controller::constants::CHANNEL_COUNT_MAX];
@@ -130,7 +130,7 @@ private:
 
   void removeParentAndChildrenPwmInfo(int pwm_index);
 
-  long powerToAnalogWriteValue(long power);
+  long powerToHighFrequencyDutyCycle(long power);
   void setPowersToMax();
 
   void updateChannel(size_t channel);
@@ -154,7 +154,7 @@ private:
   void setPowerMaxHandler(size_t channel);
   void enableAllHandler();
   void disableAllHandler();
-  void enabledHandler();
+  void allEnabledHandler();
   void setPowerWhenOnHandler();
   void setPowersWhenOnHandler();
   void setAllPowersWhenOnHandler();

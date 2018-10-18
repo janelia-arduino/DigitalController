@@ -37,10 +37,8 @@ extern ConstantString device_name;
 extern ConstantString firmware_name;
 extern const modular_server::FirmwareInfo firmware_info;
 
-extern const size_t enable_pin;
-
-extern const long analog_write_min;
-extern const long analog_write_max;
+extern const long high_frequency_duty_cycle_min;
+extern const long high_frequency_duty_cycle_max;
 extern const long channel_pwm_min;
 extern const long channel_pwm_max;
 
@@ -120,7 +118,7 @@ extern ConstantString on_durations_parameter_name;
 // Functions
 extern ConstantString enable_all_function_name;
 extern ConstantString disable_all_function_name;
-extern ConstantString enabled_function_name;
+extern ConstantString all_enabled_function_name;
 extern ConstantString set_power_when_on_function_name;
 extern ConstantString set_powers_when_on_function_name;
 extern ConstantString set_all_powers_when_on_function_name;

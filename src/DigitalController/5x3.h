@@ -24,8 +24,6 @@ enum{INDEXED_PWM_COUNT_MAX=16};
 
 enum{PWM_LEVEL_COUNT_MAX=4};
 
-extern const size_t signal_pins[CHANNEL_COUNT_MAX];
-
 // Pins
 
 // Units
