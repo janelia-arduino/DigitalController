@@ -20,8 +20,8 @@ namespace constants
 //MAX values must be >= 1, >= created/copied count, < RAM limit
 enum{PROPERTY_COUNT_MAX=2};
 enum{PARAMETER_COUNT_MAX=12};
-enum{FUNCTION_COUNT_MAX=35};
-enum{CALLBACK_COUNT_MAX=1};
+enum{FUNCTION_COUNT_MAX=30};
+enum{CALLBACK_COUNT_MAX=5};
 
 enum
 {
@@ -116,8 +116,6 @@ extern ConstantString periods_parameter_name;
 extern ConstantString on_durations_parameter_name;
 
 // Functions
-extern ConstantString enable_all_function_name;
-extern ConstantString disable_all_function_name;
 extern ConstantString all_enabled_function_name;
 extern ConstantString set_power_when_on_function_name;
 extern ConstantString set_powers_when_on_function_name;
@@ -132,9 +130,6 @@ extern ConstantString set_channels_on_at_power_function_name;
 extern ConstantString set_channels_off_function_name;
 extern ConstantString toggle_channel_function_name;
 extern ConstantString toggle_channels_function_name;
-extern ConstantString toggle_all_channels_function_name;
-extern ConstantString set_all_channels_on_function_name;
-extern ConstantString set_all_channels_off_function_name;
 extern ConstantString set_channel_on_all_others_off_function_name;
 extern ConstantString set_channel_off_all_others_on_function_name;
 extern ConstantString set_channels_on_all_others_off_function_name;
@@ -153,6 +148,11 @@ extern ConstantString get_channels_pwm_indexes_function_name;
 extern ConstantString get_pwm_info_function_name;
 
 // Callbacks
+extern ConstantString enable_all_callback_name;
+extern ConstantString disable_all_callback_name;
+extern ConstantString toggle_all_channels_callback_name;
+extern ConstantString set_all_channels_on_callback_name;
+extern ConstantString set_all_channels_off_callback_name;
 
 // Errors
 extern ConstantString no_pwm_available_error;

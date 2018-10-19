@@ -152,8 +152,7 @@ private:
 
   // Handlers
   void setPowerMaxHandler(size_t channel);
-  void enableAllHandler();
-  void disableAllHandler();
+
   void allEnabledHandler();
   void setPowerWhenOnHandler();
   void setPowersWhenOnHandler();
@@ -168,9 +167,6 @@ private:
   void setChannelsOffHandler();
   void toggleChannelHandler();
   void toggleChannelsHandler();
-  void toggleAllChannelsHandler();
-  void setAllChannelsOnHandler();
-  void setAllChannelsOffHandler();
   void setChannelOnAllOthersOffHandler();
   void setChannelOffAllOthersOnHandler();
   void setChannelsOnAllOthersOffHandler();
@@ -187,6 +183,13 @@ private:
   void stopAllPwmHandler();
   void getChannelsPwmIndexesHandler();
   void getPwmInfoHandler();
+
+  void enableAllHandler(modular_server::Pin * pin_ptr);
+  void disableAllHandler(modular_server::Pin * pin_ptr);
+  void toggleAllChannelsHandler(modular_server::Pin * pin_ptr);
+  void setAllChannelsOnHandler(modular_server::Pin * pin_ptr);
+  void setAllChannelsOffHandler(modular_server::Pin * pin_ptr);
+
   void setChannelsOnHandler(int pwm_index);
   void setChannelsOffHandler(int pwm_index);
   void startRecursivePwmHandler(int pwm_index);

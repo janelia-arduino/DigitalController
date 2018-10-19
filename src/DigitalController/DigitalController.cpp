@@ -31,6 +31,9 @@ void DigitalController::setup()
   // Pin Setup
 
   // Pins
+  modular_server::Pin & btn_a_pin = modular_server_.pin(modular_device_base::constants::btn_a_pin_name);
+
+  modular_server::Pin & btn_b_pin = modular_server_.pin(modular_device_base::constants::btn_b_pin_name);
 
   // Add Hardware
 
@@ -103,12 +106,6 @@ void DigitalController::setup()
   setChannelCountHandler();
 
   // Functions
-  modular_server::Function & enable_all_function = modular_server_.createFunction(constants::enable_all_function_name);
-  enable_all_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::enableAllHandler));
-
-  modular_server::Function & disable_all_function = modular_server_.createFunction(constants::disable_all_function_name);
-  disable_all_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::disableAllHandler));
-
   modular_server::Function & all_enabled_function = modular_server_.createFunction(constants::all_enabled_function_name);
   all_enabled_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::allEnabledHandler));
   all_enabled_function.setResultTypeBool();
@@ -174,15 +171,6 @@ void DigitalController::setup()
   modular_server::Function & toggle_channels_function = modular_server_.createFunction(constants::toggle_channels_function_name);
   toggle_channels_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::toggleChannelsHandler));
   toggle_channels_function.addParameter(channels_parameter);
-
-  modular_server::Function & toggle_all_channels_function = modular_server_.createFunction(constants::toggle_all_channels_function_name);
-  toggle_all_channels_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::toggleAllChannelsHandler));
-
-  modular_server::Function & set_all_channels_on_function = modular_server_.createFunction(constants::set_all_channels_on_function_name);
-  set_all_channels_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllChannelsOnHandler));
-
-  modular_server::Function & set_all_channels_off_function = modular_server_.createFunction(constants::set_all_channels_off_function_name);
-  set_all_channels_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllChannelsOffHandler));
 
   modular_server::Function & set_channel_on_all_others_off_function = modular_server_.createFunction(constants::set_channel_on_all_others_off_function_name);
   set_channel_on_all_others_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelOnAllOthersOffHandler));
@@ -270,6 +258,23 @@ void DigitalController::setup()
   get_pwm_info_function.setResultTypeObject();
 
   // Callbacks
+  modular_server::Callback & enable_all_callback = modular_server_.createCallback(constants::enable_all_callback_name);
+  enable_all_callback.attachFunctor(makeFunctor((Functor1<modular_server::Pin *> *)0,*this,&DigitalController::enableAllHandler));
+
+  modular_server::Callback & disable_all_callback = modular_server_.createCallback(constants::disable_all_callback_name);
+  disable_all_callback.attachFunctor(makeFunctor((Functor1<modular_server::Pin *> *)0,*this,&DigitalController::disableAllHandler));
+
+  modular_server::Callback & toggle_all_channels_callback = modular_server_.createCallback(constants::toggle_all_channels_callback_name);
+  toggle_all_channels_callback.attachFunctor(makeFunctor((Functor1<modular_server::Pin *> *)0,*this,&DigitalController::toggleAllChannelsHandler));
+
+  modular_server::Callback & set_all_channels_on_callback = modular_server_.createCallback(constants::set_all_channels_on_callback_name);
+  set_all_channels_on_callback.attachFunctor(makeFunctor((Functor1<modular_server::Pin *> *)0,*this,&DigitalController::setAllChannelsOnHandler));
+  set_all_channels_on_callback.attachTo(btn_a_pin,modular_server::constants::pin_mode_interrupt_falling);
+
+  modular_server::Callback & set_all_channels_off_callback = modular_server_.createCallback(constants::set_all_channels_off_callback_name);
+  set_all_channels_off_callback.attachFunctor(makeFunctor((Functor1<modular_server::Pin *> *)0,*this,&DigitalController::setAllChannelsOffHandler));
+  set_all_channels_off_callback.attachTo(btn_b_pin,modular_server::constants::pin_mode_interrupt_falling);
+
 
 }
 
@@ -1046,16 +1051,6 @@ void DigitalController::setPowerMaxHandler(size_t channel)
   updateChannel(channel);
 }
 
-void DigitalController::enableAllHandler()
-{
-  enableAll();
-}
-
-void DigitalController::disableAllHandler()
-{
-  disableAll();
-}
-
 void DigitalController::allEnabledHandler()
 {
   bool all_enabled = allEnabled();
@@ -1199,21 +1194,6 @@ void DigitalController::toggleChannelsHandler()
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
   const uint32_t channels = arrayToChannels(*channels_array_ptr);
   toggleChannels(channels);
-}
-
-void DigitalController::toggleAllChannelsHandler()
-{
-  toggleAllChannels();
-}
-
-void DigitalController::setAllChannelsOnHandler()
-{
-  setAllChannelsOn();
-}
-
-void DigitalController::setAllChannelsOffHandler()
-{
-  setAllChannelsOff();
 }
 
 void DigitalController::setChannelOnAllOthersOffHandler()
@@ -1425,6 +1405,31 @@ void DigitalController::getPwmInfoHandler()
 
   modular_server_.response().endArray();
 
+}
+
+void DigitalController::enableAllHandler(modular_server::Pin * pin_ptr)
+{
+  enableAll();
+}
+
+void DigitalController::disableAllHandler(modular_server::Pin * pin_ptr)
+{
+  disableAll();
+}
+
+void DigitalController::toggleAllChannelsHandler(modular_server::Pin * pin_ptr)
+{
+  toggleAllChannels();
+}
+
+void DigitalController::setAllChannelsOnHandler(modular_server::Pin * pin_ptr)
+{
+  setAllChannelsOn();
+}
+
+void DigitalController::setAllChannelsOffHandler(modular_server::Pin * pin_ptr)
+{
+  setAllChannelsOff();
 }
 
 void DigitalController::setChannelsOnHandler(int pwm_index)

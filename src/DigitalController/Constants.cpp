@@ -87,8 +87,6 @@ CONSTANT_STRING(periods_parameter_name,"periods");
 CONSTANT_STRING(on_durations_parameter_name,"on_durations");
 
 // Functions
-CONSTANT_STRING(enable_all_function_name,"enableAll");
-CONSTANT_STRING(disable_all_function_name,"disableAll");
 CONSTANT_STRING(all_enabled_function_name,"allEnabled");
 CONSTANT_STRING(set_power_when_on_function_name,"setPowerWhenOn");
 CONSTANT_STRING(set_powers_when_on_function_name,"setPowersWhenOn");
@@ -103,9 +101,6 @@ CONSTANT_STRING(set_channels_on_at_power_function_name,"setChannelsOnAtPower");
 CONSTANT_STRING(set_channels_off_function_name,"setChannelsOff");
 CONSTANT_STRING(toggle_channel_function_name,"toggleChannel");
 CONSTANT_STRING(toggle_channels_function_name,"toggleChannels");
-CONSTANT_STRING(toggle_all_channels_function_name,"toggleAllChannels");
-CONSTANT_STRING(set_all_channels_on_function_name,"setAllChannelsOn");
-CONSTANT_STRING(set_all_channels_off_function_name,"setAllChannelsOff");
 CONSTANT_STRING(set_channel_on_all_others_off_function_name,"setChannelOnAllOthersOff");
 CONSTANT_STRING(set_channel_off_all_others_on_function_name,"setChannelOffAllOthersOn");
 CONSTANT_STRING(set_channels_on_all_others_off_function_name,"setChannelsOnAllOthersOff");
@@ -124,6 +119,11 @@ CONSTANT_STRING(get_channels_pwm_indexes_function_name,"getChannelsPwmIndexes");
 CONSTANT_STRING(get_pwm_info_function_name,"getPwmInfo");
 
 // Callbacks
+CONSTANT_STRING(enable_all_callback_name,"enableAll");
+CONSTANT_STRING(disable_all_callback_name,"disableAll");
+CONSTANT_STRING(toggle_all_channels_callback_name,"toggleAllChannels");
+CONSTANT_STRING(set_all_channels_on_callback_name,"setAllChannelsOn");
+CONSTANT_STRING(set_all_channels_off_callback_name,"setAllChannelsOff");
 
 // Errors
 CONSTANT_STRING(no_pwm_available_error,"Maximum number of PWM already set, must stop one to add another.");
