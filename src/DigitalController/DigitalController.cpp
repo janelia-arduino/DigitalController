@@ -297,7 +297,7 @@ long DigitalController::setPowerWhenOn(size_t channel,
   long power)
 {
   long power_to_set = 0;
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     power_to_set = power;
     if (power_to_set < constants::power_min)
@@ -325,7 +325,7 @@ long DigitalController::setPowerWhenOn(size_t channel,
 long DigitalController::getPowerWhenOn(size_t channel)
 {
   long power = constants::power_min;
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     noInterrupts();
     power = powers_when_on_[channel];
@@ -337,7 +337,7 @@ long DigitalController::getPowerWhenOn(size_t channel)
 long DigitalController::getPower(size_t channel)
 {
   long power = constants::power_min;
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     noInterrupts();
     power = powers_[channel];
@@ -349,7 +349,7 @@ long DigitalController::getPower(size_t channel)
 void DigitalController::setChannels(uint32_t channels)
 {
   uint32_t bit = 1;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     if ((bit << channel) & channels)
     {
@@ -364,7 +364,7 @@ void DigitalController::setChannels(uint32_t channels)
 
 void DigitalController::setChannelOn(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -390,7 +390,7 @@ void DigitalController::setChannelOn(size_t channel)
 void DigitalController::setChannelOnAtPower(size_t channel,
   long power)
 {
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -412,7 +412,7 @@ void DigitalController::setChannelOnAtPower(size_t channel,
 
 void DigitalController::setChannelOff(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -428,7 +428,7 @@ void DigitalController::setChannelOff(size_t channel)
 void DigitalController::setChannelsOn(uint32_t channels)
 {
   uint32_t bit = 1;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     if ((bit << channel) & channels)
     {
@@ -441,7 +441,7 @@ void DigitalController::setChannelsOnAtPower(uint32_t channels,
   long power)
 {
   uint32_t bit = 1;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     if ((bit << channel) & channels)
     {
@@ -453,7 +453,7 @@ void DigitalController::setChannelsOnAtPower(uint32_t channels,
 void DigitalController::setChannelsOff(uint32_t channels)
 {
   uint32_t bit = 1;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     if ((bit << channel) & channels)
     {
@@ -464,7 +464,7 @@ void DigitalController::setChannelsOff(uint32_t channels)
 
 void DigitalController::toggleChannel(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -501,7 +501,7 @@ void DigitalController::toggleAllChannels()
 
 void DigitalController::setAllChannelsOn()
 {
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     setChannelOn(channel);
   }
@@ -509,7 +509,7 @@ void DigitalController::setAllChannelsOn()
 
 void DigitalController::setAllChannelsOff()
 {
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     setChannelOff(channel);
   }
@@ -517,7 +517,7 @@ void DigitalController::setAllChannelsOff()
 
 void DigitalController::setChannelOnAllOthersOff(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -530,7 +530,7 @@ void DigitalController::setChannelOnAllOthersOff(size_t channel)
 
 void DigitalController::setChannelOffAllOthersOn(size_t channel)
 {
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     uint32_t bit = 1;
     bit = bit << channel;
@@ -560,7 +560,7 @@ void DigitalController::setChannelsOffAllOthersOn(uint32_t channels)
 bool DigitalController::channelIsOn(size_t channel)
 {
   bool channel_is_on = false;
-  if (channel < constants::CHANNEL_COUNT_MAX)
+  if (channel < getChannelCount())
   {
     noInterrupts();
     uint32_t channels = channels_;
@@ -766,11 +766,16 @@ void DigitalController::addEventUsingDelay(const Functor1<int> & functor,
   event_controller_.enable(event_id);
 }
 
+void DigitalController::setChannelOnAtHighFrequency(size_t channel,
+  long high_frequency_duty_cycle)
+{
+}
+
 DigitalController::ChannelsPwmIndexes DigitalController::getChannelsPwmIndexes()
 {
   ChannelsPwmIndexes channels_pwm_indexes;
   noInterrupts();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     RecursivePwmValues channel_pwm_indexes(channels_pwm_indexes_[channel]);
     channels_pwm_indexes.push_back(channel_pwm_indexes);
@@ -779,7 +784,7 @@ DigitalController::ChannelsPwmIndexes DigitalController::getChannelsPwmIndexes()
   return channels_pwm_indexes;
 }
 
-uint32_t DigitalController::arrayToChannels(ArduinoJson::JsonArray & channels_array)
+uint32_t DigitalController::jsonArrayToChannels(ArduinoJson::JsonArray & channels_array)
 {
   uint32_t channels = 0;
   uint32_t bit = 1;
@@ -793,7 +798,7 @@ uint32_t DigitalController::arrayToChannels(ArduinoJson::JsonArray & channels_ar
   return channels;
 }
 
-DigitalController::RecursivePwmValues DigitalController::arrayToRecursivePwmValues(ArduinoJson::JsonArray & array)
+DigitalController::RecursivePwmValues DigitalController::jsonArrayToRecursivePwmValues(ArduinoJson::JsonArray & array)
 {
   RecursivePwmValues pwm_values;
   for (ArduinoJson::JsonArray::iterator array_it=array.begin();
@@ -837,7 +842,7 @@ void DigitalController::setPowersToMax()
 {
   modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
   long power_max;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     power_max_property.getElementValue(channel,power_max);
     noInterrupts();
@@ -870,7 +875,7 @@ void DigitalController::updateAllChannels()
 void DigitalController::initializePwmIndexes()
 {
   noInterrupts();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     for (size_t level=0; level<constants::PWM_LEVEL_COUNT_MAX; ++level)
     {
@@ -884,7 +889,7 @@ void DigitalController::setChannelPwmIndexesRunning(size_t channel,
   size_t level,
   int pwm_index)
 {
-  if ((channel < constants::CHANNEL_COUNT_MAX) && (level < constants::PWM_LEVEL_COUNT_MAX))
+  if ((channel < getChannelCount()) && (level < constants::PWM_LEVEL_COUNT_MAX))
   {
     noInterrupts();
     channels_pwm_indexes_[channel][level] = pwm_index;
@@ -900,7 +905,7 @@ void DigitalController::setChannelsPwmIndexesRunning(uint32_t channels,
   {
     uint32_t bit = 1;
     noInterrupts();
-    for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+    for (size_t channel=0; channel<getChannelCount(); ++channel)
     {
       if ((bit << channel) & channels)
       {
@@ -914,7 +919,7 @@ void DigitalController::setChannelsPwmIndexesRunning(uint32_t channels,
 void DigitalController::setChannelPwmIndexesStopped(size_t channel,
   size_t level)
 {
-  if ((channel < constants::CHANNEL_COUNT_MAX) && (level < constants::PWM_LEVEL_COUNT_MAX))
+  if ((channel < getChannelCount()) && (level < constants::PWM_LEVEL_COUNT_MAX))
   {
     noInterrupts();
     channels_pwm_indexes_[channel][level] = constants::PWM_NOT_RUNNING_INDEX;
@@ -929,7 +934,7 @@ void DigitalController::setChannelsPwmIndexesStopped(uint32_t channels,
   {
     uint32_t bit = 1;
     noInterrupts();
-    for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+    for (size_t channel=0; channel<getChannelCount(); ++channel)
     {
       if ((bit << channel) & channels)
       {
@@ -1009,11 +1014,6 @@ void DigitalController::stopPwmHandler(int pwm_index)
   {
     functor_count_completed(functor_arg);
   }
-}
-
-void DigitalController::setChannelOnAtHighFrequency(size_t channel,
-  long high_frequency_duty_cycle)
-{
 }
 
 void DigitalController::setChannelCountHandler()
@@ -1097,7 +1097,7 @@ void DigitalController::setAllPowersWhenOnHandler()
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
 
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     long power = setPowerWhenOn(channel,power_to_set);
     modular_server_.response().write(power);
@@ -1111,7 +1111,7 @@ void DigitalController::getPowersWhenOnHandler()
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
   long power;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     power = getPowerWhenOn(channel);
     modular_server_.response().write(power);
@@ -1124,7 +1124,7 @@ void DigitalController::getPowersHandler()
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
   long power;
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     power = getPower(channel);
     modular_server_.response().write(power);
@@ -1159,7 +1159,7 @@ void DigitalController::setChannelsOnHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   setChannelsOn(channels);
 }
 
@@ -1167,7 +1167,7 @@ void DigitalController::setChannelsOnAtPowerHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   size_t power;
   modular_server_.parameter(constants::power_parameter_name).getValue(power);
   setChannelsOnAtPower(channels,power);
@@ -1177,7 +1177,7 @@ void DigitalController::setChannelsOffHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   setChannelsOff(channels);
 }
 
@@ -1192,7 +1192,7 @@ void DigitalController::toggleChannelsHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   toggleChannels(channels);
 }
 
@@ -1214,7 +1214,7 @@ void DigitalController::setChannelsOnAllOthersOffHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   setChannelsOnAllOthersOff(channels);
 }
 
@@ -1222,7 +1222,7 @@ void DigitalController::setChannelsOffAllOthersOnHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   setChannelsOffAllOthersOn(channels);
 }
 
@@ -1240,7 +1240,7 @@ void DigitalController::getChannelsOnHandler()
   uint32_t bit = 1;
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     if (channels_on & (bit << channel))
     {
@@ -1257,7 +1257,7 @@ void DigitalController::getChannelsOffHandler()
   uint32_t bit = 1;
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     if (channels_off & (bit << channel))
     {
@@ -1285,7 +1285,7 @@ void DigitalController::addPwmHandler()
   modular_server_.parameter(constants::on_duration_parameter_name).getValue(on_duration);
   long count;
   modular_server_.parameter(constants::count_parameter_name).getValue(count);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   int pwm_index = addPwm(channels,delay,period,on_duration,count);
   returnPwmIndexResponse(pwm_index);
 }
@@ -1300,7 +1300,7 @@ void DigitalController::startPwmHandler()
   modular_server_.parameter(constants::period_parameter_name).getValue(period);
   long on_duration;
   modular_server_.parameter(constants::on_duration_parameter_name).getValue(on_duration);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   int pwm_index = startPwm(channels,delay,period,on_duration);
   returnPwmIndexResponse(pwm_index);
 }
@@ -1317,9 +1317,9 @@ void DigitalController::addRecursivePwmHandler()
   modular_server_.parameter(constants::on_durations_parameter_name).getValue(on_durations_array_ptr);
   long count;
   modular_server_.parameter(constants::count_parameter_name).getValue(count);
-  const uint32_t channels = arrayToChannels(*channels_array_ptr);
-  RecursivePwmValues periods = arrayToRecursivePwmValues(*periods_array_ptr);
-  RecursivePwmValues on_durations = arrayToRecursivePwmValues(*on_durations_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  RecursivePwmValues periods = jsonArrayToRecursivePwmValues(*periods_array_ptr);
+  RecursivePwmValues on_durations = jsonArrayToRecursivePwmValues(*on_durations_array_ptr);
   int pwm_index = addRecursivePwm(channels,delay,periods,on_durations,count);
   returnPwmIndexResponse(pwm_index);
 }
@@ -1346,7 +1346,7 @@ void DigitalController::getChannelsPwmIndexesHandler()
   modular_server_.response().beginArray();
 
   ChannelsPwmIndexes channels_pwm_indexes = getChannelsPwmIndexes();
-  for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     modular_server_.response().beginArray();
 
@@ -1383,7 +1383,7 @@ void DigitalController::getPwmInfoHandler()
       modular_server_.response().write(constants::pwm_index_parameter_name,i);
       modular_server_.response().writeKey(constants::channels_parameter_name);
       modular_server_.response().beginArray();
-      for (size_t channel=0; channel<constants::CHANNEL_COUNT_MAX; ++channel)
+      for (size_t channel=0; channel<getChannelCount(); ++channel)
       {
         if ((bit << channel) & pwm_info.channels)
         {

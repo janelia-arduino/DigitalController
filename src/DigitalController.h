@@ -92,22 +92,20 @@ public:
     uint32_t delay,
     int arg=-1);
 
-  typedef Array<RecursivePwmValues,digital_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
-  ChannelsPwmIndexes getChannelsPwmIndexes();
-
-  uint32_t arrayToChannels(ArduinoJson::JsonArray & channels_array);
-  RecursivePwmValues arrayToRecursivePwmValues(ArduinoJson::JsonArray & array);
-
-  // Handlers
-  virtual void startPwmHandler(int pwm_index);
-  virtual void stopPwmHandler(int pwm_index);
-
 protected:
   virtual void setChannelOnAtHighFrequency(size_t channel,
     long high_frequency_duty_cycle);
 
+  typedef Array<RecursivePwmValues,digital_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
+  ChannelsPwmIndexes getChannelsPwmIndexes();
+
+  uint32_t jsonArrayToChannels(ArduinoJson::JsonArray & channels_array);
+  RecursivePwmValues jsonArrayToRecursivePwmValues(ArduinoJson::JsonArray & array);
+
   // Handlers
   void setChannelCountHandler();
+  virtual void startPwmHandler(int pwm_index);
+  virtual void stopPwmHandler(int pwm_index);
 
 private:
   modular_server::Property properties_[digital_controller::constants::PROPERTY_COUNT_MAX];
