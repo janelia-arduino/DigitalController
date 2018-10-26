@@ -34,6 +34,8 @@ public:
 
   long setPowerWhenOn(size_t channel,
     long power);
+  long setPowerWhenOnToMax(size_t channel);
+  void setAllPowersWhenOnToMax();
   long getPowerWhenOn(size_t channel);
   long getPower(size_t channel);
 
@@ -50,6 +52,7 @@ public:
   void toggleChannels(uint32_t channels);
   void toggleAllChannels();
   void setAllChannelsOn();
+  void setAllChannelsOnAtPower(long power);
   void setAllChannelsOff();
   void setChannelOnAllOthersOff(size_t channel);
   void setChannelOffAllOthersOn(size_t channel);
@@ -129,7 +132,6 @@ private:
   void removeParentAndChildrenPwmInfo(int pwm_index);
 
   long powerToHighFrequencyDutyCycle(long power);
-  void setPowersToMax();
 
   void updateChannel(size_t channel);
   void updateAllChannels();
@@ -155,6 +157,7 @@ private:
   void setPowerWhenOnHandler();
   void setPowersWhenOnHandler();
   void setAllPowersWhenOnHandler();
+  void setAllPowersWhenOnToMaxHandler();
   void getPowersWhenOnHandler();
   void getPowersHandler();
   void setChannelOnHandler();
@@ -165,6 +168,7 @@ private:
   void setChannelsOffHandler();
   void toggleChannelHandler();
   void toggleChannelsHandler();
+  void setAllChannelsOnAtPowerHandler();
   void setChannelOnAllOthersOffHandler();
   void setChannelOffAllOthersOnHandler();
   void setChannelsOnAllOthersOffHandler();

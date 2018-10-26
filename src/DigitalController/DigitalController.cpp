@@ -54,8 +54,6 @@ void DigitalController::setup()
   power_max_property.setUnits(constants::percent_units);
   power_max_property.attachPostSetElementValueFunctor(makeFunctor((Functor1<size_t> *)0,*this,&DigitalController::setPowerMaxHandler));
 
-  setPowersToMax();
-
   // Parameters
   modular_server::Parameter & channel_parameter = modular_server_.createParameter(constants::channel_parameter_name);
 
@@ -128,6 +126,11 @@ void DigitalController::setup()
   set_all_powers_when_on_function.setResultTypeArray();
   set_all_powers_when_on_function.setResultTypeLong();
 
+  modular_server::Function & set_all_powers_when_on_to_max_function = modular_server_.createFunction(constants::set_all_powers_when_on_to_max_function_name);
+  set_all_powers_when_on_to_max_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllPowersWhenOnToMaxHandler));
+  set_all_powers_when_on_to_max_function.setResultTypeArray();
+  set_all_powers_when_on_to_max_function.setResultTypeLong();
+
   modular_server::Function & get_powers_when_on_function = modular_server_.createFunction(constants::get_powers_when_on_function_name);
   get_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getPowersWhenOnHandler));
   get_powers_when_on_function.setResultTypeArray();
@@ -171,6 +174,10 @@ void DigitalController::setup()
   modular_server::Function & toggle_channels_function = modular_server_.createFunction(constants::toggle_channels_function_name);
   toggle_channels_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::toggleChannelsHandler));
   toggle_channels_function.addParameter(channels_parameter);
+
+  modular_server::Function & set_all_channels_on_at_power_function = modular_server_.createFunction(constants::set_all_channels_on_at_power_function_name);
+  set_all_channels_on_at_power_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllChannelsOnAtPowerHandler));
+  set_all_channels_on_at_power_function.addParameter(power_parameter);
 
   modular_server::Function & set_channel_on_all_others_off_function = modular_server_.createFunction(constants::set_channel_on_all_others_off_function_name);
   set_channel_on_all_others_off_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelOnAllOthersOffHandler));
@@ -320,6 +327,33 @@ long DigitalController::setPowerWhenOn(size_t channel,
     updateChannel(channel);
   }
   return power_to_set;
+}
+
+long DigitalController::setPowerWhenOnToMax(size_t channel)
+{
+  long power_to_set = 0;
+  if (channel < getChannelCount())
+  {
+    modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
+    long power_max;
+    power_max_property.getElementValue(channel,power_max);
+
+    power_to_set = setPowerWhenOn(channel,power_max);
+  }
+  return power_to_set;
+}
+
+void DigitalController::setAllPowersWhenOnToMax()
+{
+  modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
+  long power_max;
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
+  {
+    power_max_property.getElementValue(channel,power_max);
+    noInterrupts();
+    powers_when_on_[channel] = power_max;
+    interrupts();
+  }
 }
 
 long DigitalController::getPowerWhenOn(size_t channel)
@@ -507,6 +541,14 @@ void DigitalController::setAllChannelsOn()
   }
 }
 
+void DigitalController::setAllChannelsOnAtPower(long power)
+{
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
+  {
+    setChannelOnAtPower(channel,power);
+  }
+}
+
 void DigitalController::setAllChannelsOff()
 {
   for (size_t channel=0; channel<getChannelCount(); ++channel)
@@ -583,6 +625,16 @@ size_t DigitalController::getChannelCount()
 {
   long channel_count;
   modular_server_.property(constants::channel_count_property_name).getValue(channel_count);
+
+  // channel_count may contain bad values
+  if (channel_count < constants::channel_count_min)
+  {
+    channel_count = constants::channel_count_min;
+  }
+  else if (channel_count > constants::CHANNEL_COUNT_MAX)
+  {
+    channel_count = constants::CHANNEL_COUNT_MAX;
+  }
 
   return channel_count;
 }
@@ -838,19 +890,6 @@ long DigitalController::powerToHighFrequencyDutyCycle(long power)
   return high_frequency_duty_cycle;
 }
 
-void DigitalController::setPowersToMax()
-{
-  modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
-  long power_max;
-  for (size_t channel=0; channel<getChannelCount(); ++channel)
-  {
-    power_max_property.getElementValue(channel,power_max);
-    noInterrupts();
-    powers_when_on_[channel] = power_max;
-    interrupts();
-  }
-}
-
 void DigitalController::updateChannel(size_t channel)
 {
   uint32_t bit = 1;
@@ -1034,6 +1073,7 @@ void DigitalController::setChannelCountHandler()
   modular_server::Parameter & powers_parameter = modular_server_.parameter(constants::powers_parameter_name);
   powers_parameter.setArrayLengthRange(channel_count,channel_count);
 
+  setAllPowersWhenOnToMax();
 }
 
 void DigitalController::setPowerMaxHandler(size_t channel)
@@ -1100,6 +1140,20 @@ void DigitalController::setAllPowersWhenOnHandler()
   for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     long power = setPowerWhenOn(channel,power_to_set);
+    modular_server_.response().write(power);
+  }
+
+  modular_server_.response().endArray();
+}
+
+void DigitalController::setAllPowersWhenOnToMaxHandler()
+{
+  modular_server_.response().writeResultKey();
+  modular_server_.response().beginArray();
+
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
+  {
+    long power = setPowerWhenOnToMax(channel);
     modular_server_.response().write(power);
   }
 
@@ -1194,6 +1248,14 @@ void DigitalController::toggleChannelsHandler()
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
   const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   toggleChannels(channels);
+}
+
+void DigitalController::setAllChannelsOnAtPowerHandler()
+{
+  size_t power;
+  modular_server_.parameter(constants::power_parameter_name).getValue(power);
+
+  setAllChannelsOnAtPower(power);
 }
 
 void DigitalController::setChannelOnAllOthersOffHandler()
