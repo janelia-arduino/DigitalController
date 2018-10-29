@@ -1078,15 +1078,7 @@ void DigitalController::setChannelCountHandler()
 
 void DigitalController::setPowerMaxHandler(size_t channel)
 {
-  modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
-  long power_max;
-  power_max_property.getElementValue(channel,power_max);
-  noInterrupts();
-  if (powers_when_on_[channel] > power_max)
-  {
-    powers_when_on_[channel] = power_max;
-  }
-  interrupts();
+  setPowerWhenOnToMax(channel);
 
   updateChannel(channel);
 }
