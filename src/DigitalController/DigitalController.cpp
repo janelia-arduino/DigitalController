@@ -216,6 +216,7 @@ void DigitalController::setup()
   modular_server::Function & add_pwm_function = modular_server_.createFunction(constants::add_pwm_function_name);
   add_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::addPwmHandler));
   add_pwm_function.addParameter(channels_parameter);
+  add_pwm_function.addParameter(power_parameter);
   add_pwm_function.addParameter(delay_parameter);
   add_pwm_function.addParameter(period_parameter);
   add_pwm_function.addParameter(on_duration_parameter);
@@ -225,6 +226,7 @@ void DigitalController::setup()
   modular_server::Function & start_pwm_function = modular_server_.createFunction(constants::start_pwm_function_name);
   start_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::startPwmHandler));
   start_pwm_function.addParameter(channels_parameter);
+  start_pwm_function.addParameter(power_parameter);
   start_pwm_function.addParameter(delay_parameter);
   start_pwm_function.addParameter(period_parameter);
   start_pwm_function.addParameter(on_duration_parameter);
@@ -640,10 +642,34 @@ size_t DigitalController::getChannelCount()
 }
 
 int DigitalController::addPwm(uint32_t channels,
+  long power,
   long delay,
   long period,
   long on_duration,
   long count)
+{
+  return addPwm(channels,
+    power,
+    delay,
+    period,
+    on_duration,
+    count,
+    makeFunctor((Functor1<int> *)0,*this,&DigitalController::setChannelsOnAtPowerHandler),
+    makeFunctor((Functor1<int> *)0,*this,&DigitalController::setChannelsOffHandler),
+    makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmHandler),
+    makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmHandler));
+}
+
+int DigitalController::addPwm(uint32_t channels,
+  long power,
+  long delay,
+  long period,
+  long on_duration,
+  long count,
+  const Functor1<int> & on_functor,
+  const Functor1<int> & off_functor,
+  const Functor1<int> & start_functor,
+  const Functor1<int> & stop_functor)
 {
   if (indexed_pwm_.full() || (event_controller_.eventsAvailable() < 2))
   {
@@ -655,6 +681,7 @@ int DigitalController::addPwm(uint32_t channels,
   pwm_info.level = 0;
   pwm_info.top_level = true;
   pwm_info.child_index = constants::NO_CHILD_PWM_INDEX;
+  pwm_info.power = power;
   pwm_info.delay = delay;
   pwm_info.period = period;
   pwm_info.on_duration = on_duration;
@@ -663,26 +690,27 @@ int DigitalController::addPwm(uint32_t channels,
   pwm_info.functor_count_completed = functor_dummy_;
   pwm_info.functor_arg = -1;
   int pwm_index = indexed_pwm_.add(pwm_info);
-  EventIdPair event_id_pair = event_controller_.addPwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&DigitalController::setChannelsOnHandler),
-    makeFunctor((Functor1<int> *)0,*this,&DigitalController::setChannelsOffHandler),
+  EventIdPair event_id_pair = event_controller_.addPwmUsingDelay(on_functor,
+    off_functor,
     delay,
     period,
     on_duration,
     count,
     pwm_index);
-  event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmHandler));
-  event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmHandler));
+  event_controller_.addStartFunctor(event_id_pair,start_functor);
+  event_controller_.addStopFunctor(event_id_pair,stop_functor);
   indexed_pwm_[pwm_index].event_id_pair = event_id_pair;
   event_controller_.enable(event_id_pair);
   return pwm_index;
 }
 
 int DigitalController::startPwm(uint32_t channels,
+  long power,
   long delay,
   long period,
   long on_duration)
 {
-  return addPwm(channels,delay,period,on_duration,-1);
+  return addPwm(channels,power,delay,period,on_duration,-1);
 }
 
 int DigitalController::addRecursivePwm(uint32_t channels,
@@ -1022,39 +1050,6 @@ void DigitalController::returnPwmIndexResponse(int pwm_index)
 // modular_server_.property(property_name).getElementValue(element_index,value) value type must match the property array element default type
 // modular_server_.property(property_name).setElementValue(element_index,value) value type must match the property array element default type
 
-void DigitalController::startPwmHandler(int pwm_index)
-{
-  uint32_t & channels = indexed_pwm_[pwm_index].channels;
-  uint8_t & level = indexed_pwm_[pwm_index].level;
-
-  setChannelsPwmIndexesRunning(channels,level,pwm_index);
-  indexed_pwm_[pwm_index].running = true;
-}
-
-void DigitalController::stopPwmHandler(int pwm_index)
-{
-  constants::PwmInfo pwm_info = indexed_pwm_[pwm_index];
-  uint32_t & channels = pwm_info.channels;
-  uint8_t & level = pwm_info.level;
-  bool stopped_before_count_completed = pwm_info.stopped_before_count_completed;
-  Functor1<int> functor_count_completed = pwm_info.functor_count_completed;
-  int functor_arg = pwm_info.functor_arg;
-  if (level == 0)
-  {
-    setChannelsOff(channels);
-  }
-  setChannelsPwmIndexesStopped(channels,level);
-  indexed_pwm_[pwm_index].running = false;
-  if (pwm_info.top_level)
-  {
-    removeParentAndChildrenPwmInfo(pwm_index);
-  }
-  if (!stopped_before_count_completed && functor_count_completed)
-  {
-    functor_count_completed(functor_arg);
-  }
-}
-
 void DigitalController::setChannelCountHandler()
 {
   long channel_count = getChannelCount();
@@ -1331,6 +1326,8 @@ void DigitalController::addPwmHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
+  long power;
+  modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
   modular_server_.parameter(constants::delay_parameter_name).getValue(delay);
   long period;
@@ -1340,7 +1337,7 @@ void DigitalController::addPwmHandler()
   long count;
   modular_server_.parameter(constants::count_parameter_name).getValue(count);
   const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
-  int pwm_index = addPwm(channels,delay,period,on_duration,count);
+  int pwm_index = addPwm(channels,power,delay,period,on_duration,count);
   returnPwmIndexResponse(pwm_index);
 }
 
@@ -1348,6 +1345,8 @@ void DigitalController::startPwmHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
+  long power;
+  modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
   modular_server_.parameter(constants::delay_parameter_name).getValue(delay);
   long period;
@@ -1355,7 +1354,7 @@ void DigitalController::startPwmHandler()
   long on_duration;
   modular_server_.parameter(constants::on_duration_parameter_name).getValue(on_duration);
   const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
-  int pwm_index = startPwm(channels,delay,period,on_duration);
+  int pwm_index = startPwm(channels,power,delay,period,on_duration);
   returnPwmIndexResponse(pwm_index);
 }
 
@@ -1486,10 +1485,44 @@ void DigitalController::setAllChannelsOffHandler(modular_server::Pin * pin_ptr)
   setAllChannelsOff();
 }
 
-void DigitalController::setChannelsOnHandler(int pwm_index)
+void DigitalController::startPwmHandler(int pwm_index)
 {
   uint32_t & channels = indexed_pwm_[pwm_index].channels;
-  setChannelsOn(channels);
+  uint8_t & level = indexed_pwm_[pwm_index].level;
+
+  setChannelsPwmIndexesRunning(channels,level,pwm_index);
+  indexed_pwm_[pwm_index].running = true;
+}
+
+void DigitalController::stopPwmHandler(int pwm_index)
+{
+  constants::PwmInfo pwm_info = indexed_pwm_[pwm_index];
+  uint32_t & channels = pwm_info.channels;
+  uint8_t & level = pwm_info.level;
+  bool stopped_before_count_completed = pwm_info.stopped_before_count_completed;
+  Functor1<int> functor_count_completed = pwm_info.functor_count_completed;
+  int functor_arg = pwm_info.functor_arg;
+  if (level == 0)
+  {
+    setChannelsOff(channels);
+  }
+  setChannelsPwmIndexesStopped(channels,level);
+  indexed_pwm_[pwm_index].running = false;
+  if (pwm_info.top_level)
+  {
+    removeParentAndChildrenPwmInfo(pwm_index);
+  }
+  if (!stopped_before_count_completed && functor_count_completed)
+  {
+    functor_count_completed(functor_arg);
+  }
+}
+
+void DigitalController::setChannelsOnAtPowerHandler(int pwm_index)
+{
+  uint32_t & channels = indexed_pwm_[pwm_index].channels;
+  long power = indexed_pwm_[pwm_index].power;
+  setChannelsOnAtPower(channels,power);
 }
 
 void DigitalController::setChannelsOffHandler(int pwm_index)

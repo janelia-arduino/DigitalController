@@ -63,11 +63,24 @@ public:
   size_t getChannelCount();
 
   int addPwm(uint32_t channels,
+    long power,
     long delay,
     long period,
     long on_duration,
     long count);
+  int addPwm(uint32_t channels,
+    long power,
+    long delay,
+    long period,
+    long on_duration,
+    long count,
+    const Functor1<int> & on_functor,
+    const Functor1<int> & off_functor,
+    const Functor1<int> & start_functor,
+    const Functor1<int> & stop_functor);
+
   int startPwm(uint32_t channels,
+    long power,
     long delay,
     long period,
     long on_duration);
@@ -107,8 +120,6 @@ protected:
 
   // Handlers
   void setChannelCountHandler();
-  virtual void startPwmHandler(int pwm_index);
-  virtual void stopPwmHandler(int pwm_index);
 
 private:
   modular_server::Property properties_[digital_controller::constants::PROPERTY_COUNT_MAX];
@@ -192,11 +203,12 @@ private:
   void setAllChannelsOnHandler(modular_server::Pin * pin_ptr);
   void setAllChannelsOffHandler(modular_server::Pin * pin_ptr);
 
-  void setChannelsOnHandler(int pwm_index);
+  void startPwmHandler(int pwm_index);
+  void stopPwmHandler(int pwm_index);
+  void setChannelsOnAtPowerHandler(int pwm_index);
   void setChannelsOffHandler(int pwm_index);
   void startRecursivePwmHandler(int pwm_index);
   void stopRecursivePwmHandler(int pwm_index);
-
 };
 
 #endif

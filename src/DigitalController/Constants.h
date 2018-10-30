@@ -49,6 +49,7 @@ struct PwmInfo
   uint8_t level;
   bool top_level;
   int child_index;
+  long power;
   long delay;
   long period;
   long on_duration;
