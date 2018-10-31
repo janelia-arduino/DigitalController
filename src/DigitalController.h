@@ -74,10 +74,10 @@ public:
     long period,
     long on_duration,
     long count,
-    const Functor1<int> & on_functor,
-    const Functor1<int> & off_functor,
-    const Functor1<int> & start_functor,
-    const Functor1<int> & stop_functor);
+    const Functor1<int> & start_pulse_functor,
+    const Functor1<int> & stop_pulse_functor,
+    const Functor1<int> & start_pwm_functor,
+    const Functor1<int> & stop_pwm_functor);
 
   int startPwm(uint32_t channels,
     long power,
@@ -136,9 +136,9 @@ private:
   EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
   IndexedContainer<digital_controller::constants::PwmInfo,
-    digital_controller::constants::INDEXED_PWM_COUNT_MAX> indexed_pwm_;
+    digital_controller::constants::INDEXED_PWM_COUNT_MAX> pwm_info_;
 
-  const Functor1<int> functor_dummy_;
+  const Functor1<int> dummy_functor_;
 
   void removeParentAndChildrenPwmInfo(int pwm_index);
 
@@ -203,10 +203,16 @@ private:
   void setAllChannelsOnHandler(modular_server::Pin * pin_ptr);
   void setAllChannelsOffHandler(modular_server::Pin * pin_ptr);
 
+  void startPulseHandler(int pwm_index);
+  void stopPulseHandler(int pwm_index);
   void startPwmHandler(int pwm_index);
   void stopPwmHandler(int pwm_index);
-  void setChannelsOnAtPowerHandler(int pwm_index);
-  void setChannelsOffHandler(int pwm_index);
+
+  void startPulseWrapperHandler(int pwm_index);
+  void stopPulseWrapperHandler(int pwm_index);
+  void startPwmWrapperHandler(int pwm_index);
+  void stopPwmWrapperHandler(int pwm_index);
+
   void startRecursivePwmHandler(int pwm_index);
   void stopRecursivePwmHandler(int pwm_index);
 };
