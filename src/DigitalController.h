@@ -118,6 +118,8 @@ protected:
   uint32_t jsonArrayToChannels(ArduinoJson::JsonArray & channels_array);
   RecursivePwmValues jsonArrayToRecursivePwmValues(ArduinoJson::JsonArray & array);
 
+  void returnPwmIndexResponse(int pwm_index);
+
   // Handlers
   void setChannelCountHandler();
 
@@ -158,8 +160,6 @@ private:
     size_t level);
   void setChannelsPwmIndexesStopped(uint32_t channels,
     size_t level);
-
-  void returnPwmIndexResponse(int pwm_index);
 
   // Handlers
   void setPowerMaxHandler(size_t channel);

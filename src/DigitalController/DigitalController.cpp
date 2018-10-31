@@ -896,6 +896,26 @@ DigitalController::RecursivePwmValues DigitalController::jsonArrayToRecursivePwm
   return pwm_values;
 }
 
+void DigitalController::returnPwmIndexResponse(int pwm_index)
+{
+  if (pwm_index >= 0)
+  {
+    modular_server_.response().returnResult(pwm_index);
+  }
+  else if (pwm_index == constants::NO_PWM_AVAILABLE_INDEX)
+  {
+    modular_server_.response().returnError(constants::no_pwm_available_error);
+  }
+  else if (pwm_index == constants::PWM_ARRAY_LENGTHS_NOT_EQUAL_INDEX)
+  {
+    modular_server_.response().returnError(constants::pwm_array_lengths_not_equal_error);
+  }
+  else if (pwm_index == constants::PWM_ARRAY_LENGTHS_ARE_ZERO_INDEX)
+  {
+    modular_server_.response().returnError(constants::pwm_array_lengths_are_zero_error);
+  }
+}
+
 void DigitalController::removeParentAndChildrenPwmInfo(int pwm_index)
 {
   if (pwm_info_.indexHasValue(pwm_index))
@@ -1011,26 +1031,6 @@ void DigitalController::setChannelsPwmIndexesStopped(uint32_t channels,
       }
     }
     interrupts();
-  }
-}
-
-void DigitalController::returnPwmIndexResponse(int pwm_index)
-{
-  if (pwm_index >= 0)
-  {
-    modular_server_.response().returnResult(pwm_index);
-  }
-  else if (pwm_index == constants::NO_PWM_AVAILABLE_INDEX)
-  {
-    modular_server_.response().returnError(constants::no_pwm_available_error);
-  }
-  else if (pwm_index == constants::PWM_ARRAY_LENGTHS_NOT_EQUAL_INDEX)
-  {
-    modular_server_.response().returnError(constants::pwm_array_lengths_not_equal_error);
-  }
-  else if (pwm_index == constants::PWM_ARRAY_LENGTHS_ARE_ZERO_INDEX)
-  {
-    modular_server_.response().returnError(constants::pwm_array_lengths_are_zero_error);
   }
 }
 
