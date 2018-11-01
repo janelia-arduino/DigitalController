@@ -138,7 +138,7 @@ private:
   EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
   IndexedContainer<digital_controller::constants::PwmInfo,
-    digital_controller::constants::INDEXED_PWM_COUNT_MAX> pwm_info_;
+    digital_controller::constants::INDEXED_PWM_COUNT_MAX> pwm_infos_;
 
   const Functor1<int> dummy_functor_;
 
