@@ -62,13 +62,13 @@ public:
   uint32_t getChannelsOn();
   size_t getChannelCount();
 
-  int addPwm(uint32_t channels,
+  digital_controller::constants::PwmId addPwm(uint32_t channels,
     long power,
     long delay,
     long period,
     long on_duration,
     long count);
-  int addPwm(uint32_t channels,
+  digital_controller::constants::PwmId addPwm(uint32_t channels,
     long power,
     long delay,
     long period,
@@ -79,7 +79,7 @@ public:
     const Functor1<int> & start_pwm_functor,
     const Functor1<int> & stop_pwm_functor);
 
-  int startPwm(uint32_t channels,
+  digital_controller::constants::PwmId startPwm(uint32_t channels,
     long power,
     long delay,
     long period,
@@ -87,12 +87,12 @@ public:
 
   typedef Array<long,digital_controller::constants::PWM_LEVEL_COUNT_MAX> RecursivePwmValues;
 
-  int addRecursivePwm(uint32_t channels,
+  digital_controller::constants::PwmId addRecursivePwm(uint32_t channels,
     long delay,
     RecursivePwmValues periods,
     RecursivePwmValues on_durations,
     long count);
-  int startRecursivePwm(uint32_t channels,
+  digital_controller::constants::PwmId startRecursivePwm(uint32_t channels,
     long delay,
     RecursivePwmValues periods,
     RecursivePwmValues on_durations);
@@ -101,14 +101,12 @@ public:
     const Functor1<int> & functor,
     int arg=-1);
 
-  void stopPwm(int pwm_index);
+  void stopPwm(digital_controller::constants::PwmId pwm_id);
   void stopAllPwm();
 
-  void addEventUsingDelay(const Functor1<int> & functor,
-    uint32_t delay,
-    int arg=-1);
-
 protected:
+  EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
+
   virtual void setChannelOnAtHighFrequency(size_t channel,
     long high_frequency_duty_cycle);
 
@@ -135,12 +133,12 @@ private:
   long powers_[digital_controller::constants::CHANNEL_COUNT_MAX];
   long channels_pwm_indexes_[digital_controller::constants::CHANNEL_COUNT_MAX][digital_controller::constants::PWM_LEVEL_COUNT_MAX];
 
-  EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
-
   IndexedContainer<digital_controller::constants::PwmInfo,
     digital_controller::constants::INDEXED_PWM_COUNT_MAX> pwm_infos_;
 
   const Functor1<int> dummy_functor_;
+
+  void stopPwm(int pwm_index);
 
   void removeParentAndChildrenPwmInfo(int pwm_index);
 

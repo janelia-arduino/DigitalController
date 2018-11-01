@@ -69,6 +69,12 @@ extern ConstantString level_string;
 extern ConstantString top_level_string;
 extern ConstantString child_index_string;
 
+struct PwmId
+{
+  int index;
+  EventIdPair event_id_pair;
+};
+
 // Pins
 
 // Units
