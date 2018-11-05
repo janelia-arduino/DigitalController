@@ -49,7 +49,7 @@ const long power_min = 0;
 const long power_max = 100;
 
 CONSTANT_STRING(switching_frequency_max_property_name,"switchingFrequencyMax");
-const long switching_frequency_min = 100;
+const long switching_frequency_min = 1000;
 // 488.28 Hz pin pwm frequency * 100 (power_max)
 const long switching_frequency_max = 48828;
 
