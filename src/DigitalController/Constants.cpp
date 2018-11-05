@@ -20,17 +20,13 @@ const modular_server::FirmwareInfo firmware_info =
 {
   .name_ptr=&firmware_name,
   .version_major=1,
-  .version_minor=0,
+  .version_minor=1,
   .version_patch=0,
 };
 
 const long high_frequency_duty_cycle_min = 0;
 const long high_frequency_duty_cycle_max = 255;
-// BTS3256D max switching frequency = 12kHz
-// PWM frequency = 488.28Hz
-// 12kHz/488.28 = 24.576 -> 24
-const long channel_pwm_min = 0;
-const long channel_pwm_max = 24;
+const long channel_duty_cycle_min = 0;
 
 CONSTANT_STRING(running_string,"running");
 CONSTANT_STRING(level_string,"level");
@@ -42,12 +38,20 @@ CONSTANT_STRING(child_index_string,"child_index");
 // Units
 CONSTANT_STRING(ms_units,"ms");
 CONSTANT_STRING(percent_units,"%");
+CONSTANT_STRING(hz_units,"Hz");
 
 // Properties
 CONSTANT_STRING(channel_count_property_name,"channelCount");
 const long channel_count_min = 1;
 
 CONSTANT_STRING(power_max_property_name,"powerMax");
+const long power_min = 0;
+const long power_max = 100;
+
+CONSTANT_STRING(switching_frequency_max_property_name,"switchingFrequencyMax");
+const long switching_frequency_min = 100;
+// 488.28 Hz pin pwm frequency * 100 (power_max)
+const long switching_frequency_max = 48828;
 
 // Parameters
 CONSTANT_STRING(channel_parameter_name,"channel");
@@ -56,8 +60,6 @@ const long channel_min = 0;
 CONSTANT_STRING(channels_parameter_name,"channels");
 
 CONSTANT_STRING(power_parameter_name,"power");
-const long power_min = 0;
-const long power_max = 100;
 
 CONSTANT_STRING(powers_parameter_name,"powers");
 

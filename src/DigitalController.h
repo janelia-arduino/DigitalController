@@ -142,7 +142,8 @@ private:
 
   void removeParentAndChildrenPwmInfo(int pwm_index);
 
-  long powerToHighFrequencyDutyCycle(long power);
+  long powerToHighFrequencyDutyCycle(size_t channel,
+    long power);
 
   void updateChannel(size_t channel);
   void updateAllChannels();

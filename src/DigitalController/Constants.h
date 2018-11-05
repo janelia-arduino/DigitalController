@@ -18,7 +18,7 @@ namespace digital_controller
 namespace constants
 {
 //MAX values must be >= 1, >= created/copied count, < RAM limit
-enum{PROPERTY_COUNT_MAX=2};
+enum{PROPERTY_COUNT_MAX=3};
 enum{PARAMETER_COUNT_MAX=12};
 enum{FUNCTION_COUNT_MAX=32};
 enum{CALLBACK_COUNT_MAX=5};
@@ -39,8 +39,7 @@ extern const modular_server::FirmwareInfo firmware_info;
 
 extern const long high_frequency_duty_cycle_min;
 extern const long high_frequency_duty_cycle_max;
-extern const long channel_pwm_min;
-extern const long channel_pwm_max;
+extern const long channel_duty_cycle_min;
 
 struct PwmInfo
 {
@@ -80,6 +79,7 @@ struct PwmId
 // Units
 extern ConstantString ms_units;
 extern ConstantString percent_units;
+extern ConstantString hz_units;
 
 // Properties
 // Property values must be long, double, bool, long[], double[], bool[], char[], ConstantString *, (ConstantString *)[]
@@ -88,6 +88,12 @@ extern const long channel_count_min;
 extern const long channel_count_default;
 
 extern ConstantString power_max_property_name;
+extern const long power_min;
+extern const long power_max;
+
+extern ConstantString switching_frequency_max_property_name;
+extern const long switching_frequency_min;
+extern const long switching_frequency_max;
 
 // Parameters
 extern ConstantString channel_parameter_name;
@@ -96,8 +102,6 @@ extern const long channel_min;
 extern ConstantString channels_parameter_name;
 
 extern ConstantString power_parameter_name;
-extern const long power_min;
-extern const long power_max;
 
 extern ConstantString powers_parameter_name;
 
