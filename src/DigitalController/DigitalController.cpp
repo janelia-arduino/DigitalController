@@ -1096,6 +1096,9 @@ void DigitalController::setChannelCountHandler()
   modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
   power_max_property.setArrayLengthRange(channel_count,channel_count);
 
+  modular_server::Property & switching_frequency_max_property = modular_server_.property(constants::switching_frequency_max_property_name);
+  switching_frequency_max_property.setArrayLengthRange(channel_count,channel_count);
+
   modular_server::Parameter & channel_parameter = modular_server_.parameter(constants::channel_parameter_name);
   channel_parameter.setRange(constants::channel_min,channel_max);
 
