@@ -30,7 +30,7 @@ enum{PWM_LEVEL_COUNT_MAX=4};
 
 // Properties
 // Property values must be long, double, bool, long[], double[], bool[], char[], ConstantString *, (ConstantString *)[]
-extern const long power_max_default[CHANNEL_COUNT_MAX];
+extern const double power_max_default[CHANNEL_COUNT_MAX];
 
 // Parameters
 

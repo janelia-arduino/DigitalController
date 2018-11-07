@@ -17,7 +17,73 @@
 * API NAMES
 
   #+BEGIN_SRC js
-
+    {
+      "id": "getApi",
+      "result": {
+        "firmware": [
+          "DigitalController"
+        ],
+        "verbosity": "NAMES",
+        "functions": [
+          "allEnabled",
+          "setPowerWhenOn",
+          "setPowersWhenOn",
+          "setAllPowersWhenOn",
+          "setAllPowersWhenOnToMax",
+          "getPowersWhenOn",
+          "getPowers",
+          "setChannelOn",
+          "setChannelOnAtPower",
+          "setChannelOff",
+          "setChannelsOn",
+          "setChannelsOnAtPower",
+          "setChannelsOff",
+          "toggleChannel",
+          "toggleChannels",
+          "setAllChannelsOnAtPower",
+          "setChannelOnAllOthersOff",
+          "setChannelOffAllOthersOn",
+          "setChannelsOnAllOthersOff",
+          "setChannelsOffAllOthersOn",
+          "channelIsOn",
+          "getChannelsOn",
+          "getChannelsOff",
+          "getChannelCount",
+          "addPwm",
+          "startPwm",
+          "addRecursivePwm",
+          "startRecursivePwm",
+          "stopPwm",
+          "stopAllPwm",
+          "getChannelsPwmIndexes",
+          "getPwmInfo"
+        ],
+        "parameters": [
+          "channel",
+          "channels",
+          "power",
+          "powers",
+          "delay",
+          "period",
+          "on_duration",
+          "count",
+          "pwm_index",
+          "periods",
+          "on_durations"
+        ],
+        "properties": [
+          "channelCount",
+          "powerMax"
+        ],
+        "callbacks": [
+          "enableAll",
+          "disableAll",
+          "toggleAllChannels",
+          "setAllChannelsOn",
+          "setAllChannelsOff"
+        ]
+      }
+    }
   #+END_SRC
 
 * API GENERAL

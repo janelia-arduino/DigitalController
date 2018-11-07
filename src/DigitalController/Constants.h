@@ -44,7 +44,7 @@ struct PwmInfo
   uint8_t level;
   bool top_level;
   int child_index;
-  long power;
+  double power;
   long delay;
   long period;
   long on_duration;
@@ -70,6 +70,9 @@ struct PwmId
   EventIdPair event_id_pair;
 };
 
+extern const double power_lower_bound_default;
+extern const double power_upper_bound_default;
+
 // Pins
 
 // Units
@@ -83,8 +86,8 @@ extern const long channel_count_min;
 extern const long channel_count_default;
 
 extern ConstantString power_max_property_name;
-extern const long power_min;
-extern const long power_max;
+extern const double power_min;
+extern const double power_max;
 
 // Parameters
 extern ConstantString channel_parameter_name;

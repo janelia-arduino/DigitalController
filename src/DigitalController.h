@@ -32,27 +32,27 @@ public:
   void disableAll();
   bool allEnabled();
 
-  long setPowerWhenOn(size_t channel,
-    long power);
-  long setPowerWhenOnToMax(size_t channel);
+  double setPowerWhenOn(size_t channel,
+    double power);
+  double setPowerWhenOnToMax(size_t channel);
   void setAllPowersWhenOnToMax();
-  long getPowerWhenOn(size_t channel);
-  long getPower(size_t channel);
+  double getPowerWhenOn(size_t channel);
+  double getPower(size_t channel);
 
   void setChannels(uint32_t channels);
   void setChannelOn(size_t channel);
   void setChannelOnAtPower(size_t channel,
-    long power);
+    double power);
   void setChannelOff(size_t channel);
   void setChannelsOn(uint32_t channels);
   void setChannelsOnAtPower(uint32_t channels,
-    long power);
+    double power);
   void setChannelsOff(uint32_t channels);
   void toggleChannel(size_t channel);
   void toggleChannels(uint32_t channels);
   void toggleAllChannels();
   void setAllChannelsOn();
-  void setAllChannelsOnAtPower(long power);
+  void setAllChannelsOnAtPower(double power);
   void setAllChannelsOff();
   void setChannelOnAllOthersOff(size_t channel);
   void setChannelOffAllOthersOn(size_t channel);
@@ -63,13 +63,13 @@ public:
   size_t getChannelCount();
 
   digital_controller::constants::PwmId addPwm(uint32_t channels,
-    long power,
+    double power,
     long delay,
     long period,
     long on_duration,
     long count);
   digital_controller::constants::PwmId addPwm(uint32_t channels,
-    long power,
+    double power,
     long delay,
     long period,
     long on_duration,
@@ -80,7 +80,7 @@ public:
     const Functor1<int> & stop_pwm_functor);
 
   digital_controller::constants::PwmId startPwm(uint32_t channels,
-    long power,
+    double power,
     long delay,
     long period,
     long on_duration);
@@ -107,8 +107,10 @@ public:
 protected:
   EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
-  virtual long setChannelToPower(size_t channel,
-    long power);
+  virtual double getPowerLowerBound(size_t channel);
+  virtual double getPowerUpperBound(size_t channel);
+  virtual double setChannelToPower(size_t channel,
+    double power);
 
   typedef Array<RecursivePwmValues,digital_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
   ChannelsPwmIndexes getChannelsPwmIndexes();
@@ -129,8 +131,8 @@ private:
 
   bool all_enabled_;
   uint32_t channels_;
-  long powers_when_on_[digital_controller::constants::CHANNEL_COUNT_MAX];
-  long powers_[digital_controller::constants::CHANNEL_COUNT_MAX];
+  double powers_when_on_[digital_controller::constants::CHANNEL_COUNT_MAX];
+  double powers_[digital_controller::constants::CHANNEL_COUNT_MAX];
   long channels_pwm_indexes_[digital_controller::constants::CHANNEL_COUNT_MAX][digital_controller::constants::PWM_LEVEL_COUNT_MAX];
 
   IndexedContainer<digital_controller::constants::PwmInfo,

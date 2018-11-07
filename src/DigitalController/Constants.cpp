@@ -29,6 +29,9 @@ CONSTANT_STRING(level_string,"level");
 CONSTANT_STRING(top_level_string,"top_level");
 CONSTANT_STRING(child_index_string,"child_index");
 
+const double power_lower_bound_default = 0.1;
+const double power_upper_bound_default = 99.9;
+
 // Pins
 
 // Units
@@ -40,8 +43,8 @@ CONSTANT_STRING(channel_count_property_name,"channelCount");
 const long channel_count_min = 1;
 
 CONSTANT_STRING(power_max_property_name,"powerMax");
-const long power_min = 0;
-const long power_max = 100;
+const double power_min = 0.0;
+const double power_max = 100.0;
 
 // Parameters
 CONSTANT_STRING(channel_parameter_name,"channel");

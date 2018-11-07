@@ -112,34 +112,34 @@ void DigitalController::setup()
   set_power_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setPowerWhenOnHandler));
   set_power_when_on_function.addParameter(channel_parameter);
   set_power_when_on_function.addParameter(power_parameter);
-  set_power_when_on_function.setResultTypeLong();
+  set_power_when_on_function.setResultTypeDouble();
 
   modular_server::Function & set_powers_when_on_function = modular_server_.createFunction(constants::set_powers_when_on_function_name);
   set_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setPowersWhenOnHandler));
   set_powers_when_on_function.addParameter(powers_parameter);
   set_powers_when_on_function.setResultTypeArray();
-  set_powers_when_on_function.setResultTypeLong();
+  set_powers_when_on_function.setResultTypeDouble();
 
   modular_server::Function & set_all_powers_when_on_function = modular_server_.createFunction(constants::set_all_powers_when_on_function_name);
   set_all_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllPowersWhenOnHandler));
   set_all_powers_when_on_function.addParameter(power_parameter);
   set_all_powers_when_on_function.setResultTypeArray();
-  set_all_powers_when_on_function.setResultTypeLong();
+  set_all_powers_when_on_function.setResultTypeDouble();
 
   modular_server::Function & set_all_powers_when_on_to_max_function = modular_server_.createFunction(constants::set_all_powers_when_on_to_max_function_name);
   set_all_powers_when_on_to_max_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setAllPowersWhenOnToMaxHandler));
   set_all_powers_when_on_to_max_function.setResultTypeArray();
-  set_all_powers_when_on_to_max_function.setResultTypeLong();
+  set_all_powers_when_on_to_max_function.setResultTypeDouble();
 
   modular_server::Function & get_powers_when_on_function = modular_server_.createFunction(constants::get_powers_when_on_function_name);
   get_powers_when_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getPowersWhenOnHandler));
   get_powers_when_on_function.setResultTypeArray();
-  get_powers_when_on_function.setResultTypeLong();
+  get_powers_when_on_function.setResultTypeDouble();
 
   modular_server::Function & get_powers_function = modular_server_.createFunction(constants::get_powers_function_name);
   get_powers_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getPowersHandler));
   get_powers_function.setResultTypeArray();
-  get_powers_function.setResultTypeLong();
+  get_powers_function.setResultTypeDouble();
 
   modular_server::Function & set_channel_on_function = modular_server_.createFunction(constants::set_channel_on_function_name);
   set_channel_on_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::setChannelOnHandler));
@@ -302,10 +302,10 @@ bool DigitalController::allEnabled()
   return all_enabled_;
 }
 
-long DigitalController::setPowerWhenOn(size_t channel,
-  long power)
+double DigitalController::setPowerWhenOn(size_t channel,
+  double power)
 {
-  long power_to_set = 0;
+  double power_to_set = 0;
   if (channel < getChannelCount())
   {
     power_to_set = power;
@@ -316,7 +316,7 @@ long DigitalController::setPowerWhenOn(size_t channel,
     else
     {
       modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
-      long power_max;
+      double power_max;
       power_max_property.getElementValue(channel,power_max);
       if (power_to_set > power_max)
       {
@@ -331,13 +331,13 @@ long DigitalController::setPowerWhenOn(size_t channel,
   return power_to_set;
 }
 
-long DigitalController::setPowerWhenOnToMax(size_t channel)
+double DigitalController::setPowerWhenOnToMax(size_t channel)
 {
-  long power_to_set = 0;
+  double power_to_set = 0;
   if (channel < getChannelCount())
   {
     modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
-    long power_max;
+    double power_max;
     power_max_property.getElementValue(channel,power_max);
 
     power_to_set = setPowerWhenOn(channel,power_max);
@@ -348,7 +348,7 @@ long DigitalController::setPowerWhenOnToMax(size_t channel)
 void DigitalController::setAllPowersWhenOnToMax()
 {
   modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
-  long power_max;
+  double power_max;
   for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     power_max_property.getElementValue(channel,power_max);
@@ -358,9 +358,9 @@ void DigitalController::setAllPowersWhenOnToMax()
   }
 }
 
-long DigitalController::getPowerWhenOn(size_t channel)
+double DigitalController::getPowerWhenOn(size_t channel)
 {
-  long power = constants::power_min;
+  double power = constants::power_min;
   if (channel < getChannelCount())
   {
     noInterrupts();
@@ -370,9 +370,9 @@ long DigitalController::getPowerWhenOn(size_t channel)
   return power;
 }
 
-long DigitalController::getPower(size_t channel)
+double DigitalController::getPower(size_t channel)
 {
-  long power = constants::power_min;
+  double power = constants::power_min;
   if (channel < getChannelCount())
   {
     noInterrupts();
@@ -403,7 +403,7 @@ void DigitalController::setChannelOn(size_t channel)
   if (channel < getChannelCount())
   {
     noInterrupts();
-    long power = powers_when_on_[channel];
+    double power = powers_when_on_[channel];
     interrupts();
 
     setChannelOnAtPower(channel,power);
@@ -411,14 +411,14 @@ void DigitalController::setChannelOn(size_t channel)
 }
 
 void DigitalController::setChannelOnAtPower(size_t channel,
-  long power)
+  double power)
 {
   if (channel < getChannelCount())
   {
     uint32_t bit = 1;
     bit = bit << channel;
 
-    if (power == 0)
+    if (power < getPowerLowerBound(channel))
     {
       setChannelOff(channel);
       return;
@@ -439,7 +439,7 @@ void DigitalController::setChannelOff(size_t channel)
     uint32_t bit = 1;
     bit = bit << channel;
 
-    long power = constants::power_min;
+    double power = constants::power_min;
     noInterrupts();
     channels_ &= ~bit;
     power = setChannelToPower(channel,power);
@@ -461,7 +461,7 @@ void DigitalController::setChannelsOn(uint32_t channels)
 }
 
 void DigitalController::setChannelsOnAtPower(uint32_t channels,
-  long power)
+  double power)
 {
   uint32_t bit = 1;
   for (size_t channel=0; channel<getChannelCount(); ++channel)
@@ -530,7 +530,7 @@ void DigitalController::setAllChannelsOn()
   }
 }
 
-void DigitalController::setAllChannelsOnAtPower(long power)
+void DigitalController::setAllChannelsOnAtPower(double power)
 {
   for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
@@ -629,7 +629,7 @@ size_t DigitalController::getChannelCount()
 }
 
 digital_controller::constants::PwmId DigitalController::addPwm(uint32_t channels,
-  long power,
+  double power,
   long delay,
   long period,
   long on_duration,
@@ -648,7 +648,7 @@ digital_controller::constants::PwmId DigitalController::addPwm(uint32_t channels
 }
 
 digital_controller::constants::PwmId DigitalController::addPwm(uint32_t channels,
-  long power,
+  double power,
   long delay,
   long period,
   long on_duration,
@@ -705,7 +705,7 @@ digital_controller::constants::PwmId DigitalController::addPwm(uint32_t channels
 }
 
 digital_controller::constants::PwmId DigitalController::startPwm(uint32_t channels,
-  long power,
+  double power,
   long delay,
   long period,
   long on_duration)
@@ -835,8 +835,18 @@ void DigitalController::stopAllPwm()
   pwm_infos_.clear();
 }
 
-long DigitalController::setChannelToPower(size_t channel,
-  long power)
+double DigitalController::getPowerLowerBound(size_t channel)
+{
+  return constants::power_lower_bound_default;
+}
+
+double DigitalController::getPowerUpperBound(size_t channel)
+{
+  return constants::power_upper_bound_default;
+}
+
+double DigitalController::setChannelToPower(size_t channel,
+  double power)
 {
   return constants::power_min;
 }
@@ -1094,7 +1104,7 @@ void DigitalController::setPowersWhenOnHandler()
        powers_it != powers_array_ptr->end();
        ++powers_it)
   {
-    long power = *powers_it;
+    double power = *powers_it;
     power = setPowerWhenOn(channel,power);
     modular_server_.response().write(power);
     ++channel;
@@ -1113,7 +1123,7 @@ void DigitalController::setAllPowersWhenOnHandler()
 
   for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
-    long power = setPowerWhenOn(channel,power_to_set);
+    double power = setPowerWhenOn(channel,power_to_set);
     modular_server_.response().write(power);
   }
 
@@ -1127,7 +1137,7 @@ void DigitalController::setAllPowersWhenOnToMaxHandler()
 
   for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
-    long power = setPowerWhenOnToMax(channel);
+    double power = setPowerWhenOnToMax(channel);
     modular_server_.response().write(power);
   }
 
@@ -1138,7 +1148,7 @@ void DigitalController::getPowersWhenOnHandler()
 {
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
-  long power;
+  double power;
   for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     power = getPowerWhenOn(channel);
@@ -1151,7 +1161,7 @@ void DigitalController::getPowersHandler()
 {
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
-  long power;
+  double power;
   for (size_t channel=0; channel<getChannelCount(); ++channel)
   {
     power = getPower(channel);
@@ -1313,7 +1323,7 @@ void DigitalController::addPwmHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  long power;
+  double power;
   modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
   modular_server_.parameter(constants::delay_parameter_name).getValue(delay);
@@ -1332,7 +1342,7 @@ void DigitalController::startPwmHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  long power;
+  double power;
   modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
   modular_server_.parameter(constants::delay_parameter_name).getValue(delay);
@@ -1479,7 +1489,7 @@ void DigitalController::startPulseHandler(int pwm_index)
     return;
   }
   uint32_t & channels = pwm_infos_[pwm_index].channels;
-  long power = pwm_infos_[pwm_index].power;
+  double power = pwm_infos_[pwm_index].power;
   setChannelsOnAtPower(channels,power);
 }
 
