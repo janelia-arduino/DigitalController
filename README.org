@@ -56,7 +56,8 @@
           "stopPwm",
           "stopAllPwm",
           "getChannelsPwmIndexes",
-          "getPwmInfo"
+          "getPwmInfo",
+          "getPowerBounds"
         ],
         "parameters": [
           "channel",

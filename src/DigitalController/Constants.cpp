@@ -31,6 +31,8 @@ CONSTANT_STRING(child_index_string,"child_index");
 
 const double power_lower_bound_default = 0.1;
 const double power_upper_bound_default = 99.9;
+CONSTANT_STRING(power_lower_bound_string,"power_lower_bound");
+CONSTANT_STRING(power_upper_bound_string,"power_upper_bound");
 
 // Pins
 
@@ -114,6 +116,7 @@ CONSTANT_STRING(stop_pwm_function_name,"stopPwm");
 CONSTANT_STRING(stop_all_pwm_function_name,"stopAllPwm");
 CONSTANT_STRING(get_channels_pwm_indexes_function_name,"getChannelsPwmIndexes");
 CONSTANT_STRING(get_pwm_info_function_name,"getPwmInfo");
+CONSTANT_STRING(get_power_bounds_function_name,"getPowerBounds");
 
 // Callbacks
 CONSTANT_STRING(enable_all_callback_name,"enableAll");

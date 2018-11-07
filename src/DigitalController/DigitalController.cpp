@@ -266,6 +266,11 @@ void DigitalController::setup()
   get_pwm_info_function.setResultTypeArray();
   get_pwm_info_function.setResultTypeObject();
 
+  modular_server::Function & get_power_bounds_function = modular_server_.createFunction(constants::get_power_bounds_function_name);
+  get_power_bounds_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::getPowerBoundsHandler));
+  get_power_bounds_function.setResultTypeArray();
+  get_power_bounds_function.setResultTypeObject();
+
   // Callbacks
   modular_server::Callback & enable_all_callback = modular_server_.createCallback(constants::enable_all_callback_name);
   enable_all_callback.attachFunctor(makeFunctor((Functor1<modular_server::Pin *> *)0,*this,&DigitalController::enableAllHandler));
@@ -1451,6 +1456,28 @@ void DigitalController::getPwmInfoHandler()
       modular_server_.response().write(constants::count_parameter_name,pwm_info.count);
       modular_server_.response().endObject();
     }
+  }
+
+  modular_server_.response().endArray();
+
+}
+
+void DigitalController::getPowerBoundsHandler()
+{
+  modular_server_.response().writeResultKey();
+  modular_server_.response().beginArray();
+
+  for (size_t channel=0; channel<getChannelCount(); ++channel)
+  {
+    modular_server_.response().beginObject();
+
+    double power_lower_bound = getPowerLowerBound(channel);
+    modular_server_.response().write(constants::power_lower_bound_string,power_lower_bound);
+
+    double power_upper_bound = getPowerUpperBound(channel);
+    modular_server_.response().write(constants::power_upper_bound_string,power_upper_bound);
+
+    modular_server_.response().endObject();
   }
 
   modular_server_.response().endArray();

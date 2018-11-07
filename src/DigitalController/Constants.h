@@ -20,7 +20,7 @@ namespace constants
 //MAX values must be >= 1, >= created/copied count, < RAM limit
 enum{PROPERTY_COUNT_MAX=2};
 enum{PARAMETER_COUNT_MAX=12};
-enum{FUNCTION_COUNT_MAX=32};
+enum{FUNCTION_COUNT_MAX=33};
 enum{CALLBACK_COUNT_MAX=5};
 
 enum
@@ -72,6 +72,8 @@ struct PwmId
 
 extern const double power_lower_bound_default;
 extern const double power_upper_bound_default;
+extern ConstantString power_lower_bound_string;
+extern ConstantString power_upper_bound_string;
 
 // Pins
 
@@ -157,6 +159,7 @@ extern ConstantString stop_pwm_function_name;
 extern ConstantString stop_all_pwm_function_name;
 extern ConstantString get_channels_pwm_indexes_function_name;
 extern ConstantString get_pwm_info_function_name;
+extern ConstantString get_power_bounds_function_name;
 
 // Callbacks
 extern ConstantString enable_all_callback_name;

@@ -243,6 +243,13 @@
           "type": "array",
           "array_element_type": "object"
         }
+      },
+      {
+        "name": "getPowerBounds",
+        "result_info": {
+          "type": "array",
+          "array_element_type": "object"
+        }
       }
     ],
     "parameters": [

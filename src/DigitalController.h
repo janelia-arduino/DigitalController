@@ -194,6 +194,7 @@ private:
   void stopAllPwmHandler();
   void getChannelsPwmIndexesHandler();
   void getPwmInfoHandler();
+  void getPowerBoundsHandler();
 
   void enableAllHandler(modular_server::Pin * pin_ptr);
   void disableAllHandler(modular_server::Pin * pin_ptr);
