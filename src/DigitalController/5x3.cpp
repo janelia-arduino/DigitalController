@@ -57,42 +57,6 @@ const long power_max_default[CHANNEL_COUNT_MAX] =
   power_max,
 };
 
-const long switching_frequency_max_default[CHANNEL_COUNT_MAX] =
-{
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-  switching_frequency_max,
-};
-
 // Parameters
 
 // Functions

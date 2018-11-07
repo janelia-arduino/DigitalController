@@ -107,8 +107,8 @@ public:
 protected:
   EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
-  virtual void setChannelOnAtHighFrequency(size_t channel,
-    long high_frequency_duty_cycle);
+  virtual long setChannelToPower(size_t channel,
+    long power);
 
   typedef Array<RecursivePwmValues,digital_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
   ChannelsPwmIndexes getChannelsPwmIndexes();
@@ -141,9 +141,6 @@ private:
   void stopPwm(int pwm_index);
 
   void removeParentAndChildrenPwmInfo(int pwm_index);
-
-  long powerToHighFrequencyDutyCycle(size_t channel,
-    long power);
 
   void updateChannel(size_t channel);
   void updateAllChannels();

@@ -54,10 +54,6 @@ void DigitalController::setup()
   power_max_property.setUnits(constants::percent_units);
   power_max_property.attachPostSetElementValueFunctor(makeFunctor((Functor1<size_t> *)0,*this,&DigitalController::setPowerMaxHandler));
 
-  modular_server::Property & switching_frequency_max_property = modular_server_.createProperty(constants::switching_frequency_max_property_name,constants::switching_frequency_max_default);
-  switching_frequency_max_property.setRange(constants::switching_frequency_min,constants::switching_frequency_max);
-  switching_frequency_max_property.setUnits(constants::hz_units);
-
   // Parameters
   modular_server::Parameter & channel_parameter = modular_server_.createParameter(constants::channel_parameter_name);
 
@@ -406,24 +402,11 @@ void DigitalController::setChannelOn(size_t channel)
 {
   if (channel < getChannelCount())
   {
-    uint32_t bit = 1;
-    bit = bit << channel;
-
     noInterrupts();
     long power = powers_when_on_[channel];
     interrupts();
-    if (power == 0)
-    {
-      setChannelOff(channel);
-      return;
-    }
-    long high_frequency_duty_cycle = powerToHighFrequencyDutyCycle(channel,power);
 
-    noInterrupts();
-    channels_ |= bit;
-    setChannelOnAtHighFrequency(channel,high_frequency_duty_cycle);
-    powers_[channel] = round(((double)high_frequency_duty_cycle * (double)constants::power_max) / (double)constants::high_frequency_duty_cycle_max);
-    interrupts();
+    setChannelOnAtPower(channel,power);
   }
 }
 
@@ -440,12 +423,11 @@ void DigitalController::setChannelOnAtPower(size_t channel,
       setChannelOff(channel);
       return;
     }
-    long high_frequency_duty_cycle = powerToHighFrequencyDutyCycle(channel,power);
 
     noInterrupts();
     channels_ |= bit;
-    setChannelOnAtHighFrequency(channel,high_frequency_duty_cycle);
-    powers_[channel] = round(((double)high_frequency_duty_cycle * (double)constants::power_max) / (double)constants::high_frequency_duty_cycle_max);
+    power = setChannelToPower(channel,power);
+    powers_[channel] = power;
     interrupts();
   }
 }
@@ -457,10 +439,11 @@ void DigitalController::setChannelOff(size_t channel)
     uint32_t bit = 1;
     bit = bit << channel;
 
+    long power = constants::power_min;
     noInterrupts();
     channels_ &= ~bit;
-    setChannelOnAtHighFrequency(channel,constants::high_frequency_duty_cycle_min);
-    powers_[channel] = constants::power_min;
+    power = setChannelToPower(channel,power);
+    powers_[channel] = power;
     interrupts();
   }
 }
@@ -852,9 +835,10 @@ void DigitalController::stopAllPwm()
   pwm_infos_.clear();
 }
 
-void DigitalController::setChannelOnAtHighFrequency(size_t channel,
-  long high_frequency_duty_cycle)
+long DigitalController::setChannelToPower(size_t channel,
+  long power)
 {
+  return constants::power_min;
 }
 
 DigitalController::ChannelsPwmIndexes DigitalController::getChannelsPwmIndexes()
@@ -939,41 +923,6 @@ void DigitalController::removeParentAndChildrenPwmInfo(int pwm_index)
     removeParentAndChildrenPwmInfo(pwm_infos_[pwm_index].child_index);
     pwm_infos_.remove(pwm_index);
   }
-}
-
-long DigitalController::powerToHighFrequencyDutyCycle(size_t channel,
-  long power)
-{
-  if (power == constants::power_min)
-  {
-    return constants::high_frequency_duty_cycle_min;
-  }
-  else if (power == constants::power_max)
-  {
-    return constants::high_frequency_duty_cycle_max;
-  }
-
-  long channel_switching_frequency_max;
-  modular_server::Property & switching_frequency_max_property = modular_server_.property(constants::switching_frequency_max_property_name);
-  switching_frequency_max_property.getElementValue(channel,channel_switching_frequency_max);
-
-  long channel_power_min = constants::switching_frequency_max / channel_switching_frequency_max;
-  long channel_power_max = constants::power_max - channel_power_min;
-
-  if (power <= channel_power_min)
-  {
-    power = constants::power_min;
-  }
-  else if (power >= channel_power_max)
-  {
-    power = channel_power_max;
-  }
-  long high_frequency_duty_cycle = map(power,
-    constants::power_min,
-    constants::power_max,
-    constants::high_frequency_duty_cycle_min,
-    constants::high_frequency_duty_cycle_max);
-  return high_frequency_duty_cycle;
 }
 
 void DigitalController::updateChannel(size_t channel)
@@ -1095,9 +1044,6 @@ void DigitalController::setChannelCountHandler()
 
   modular_server::Property & power_max_property = modular_server_.property(constants::power_max_property_name);
   power_max_property.setArrayLengthRange(channel_count,channel_count);
-
-  modular_server::Property & switching_frequency_max_property = modular_server_.property(constants::switching_frequency_max_property_name);
-  switching_frequency_max_property.setArrayLengthRange(channel_count,channel_count);
 
   modular_server::Parameter & channel_parameter = modular_server_.parameter(constants::channel_parameter_name);
   channel_parameter.setRange(constants::channel_min,channel_max);
