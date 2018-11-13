@@ -21,7 +21,7 @@ const modular_server::FirmwareInfo firmware_info =
   .name_ptr=&firmware_name,
   .version_major=2,
   .version_minor=0,
-  .version_patch=0,
+  .version_patch=1,
 };
 
 CONSTANT_STRING(running_string,"running");
@@ -47,6 +47,7 @@ const long channel_count_min = 1;
 CONSTANT_STRING(power_max_property_name,"powerMax");
 const double power_min = 0.0;
 const double power_max = 100.0;
+const double power_mid = power_max / 2;
 
 // Parameters
 CONSTANT_STRING(channel_parameter_name,"channel");

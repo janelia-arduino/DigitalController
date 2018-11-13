@@ -90,6 +90,7 @@ extern const long channel_count_default;
 extern ConstantString power_max_property_name;
 extern const double power_min;
 extern const double power_max;
+extern const double power_mid;
 
 // Parameters
 extern ConstantString channel_parameter_name;
