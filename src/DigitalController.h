@@ -125,6 +125,8 @@ public:
 protected:
   EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
+  Functor1<int> dummy_functor_;
+
   virtual double getPowerLowerBound(size_t channel);
   virtual double getPowerUpperBound(size_t channel);
   virtual double setChannelToPower(size_t channel,
@@ -155,8 +157,6 @@ private:
 
   IndexedContainer<digital_controller::constants::PwmInfo,
     digital_controller::constants::INDEXED_PWM_COUNT_MAX> pwm_info_container_;
-
-  Functor1<int> dummy_functor_;
 
   void stopPwm(int pwm_index);
 
