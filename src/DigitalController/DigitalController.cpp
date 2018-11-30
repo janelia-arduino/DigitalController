@@ -799,15 +799,15 @@ digital_controller::constants::PwmId DigitalController::startRecursivePwm(uint32
   return addRecursivePwm(channels,delay,periods,on_durations,-1);
 }
 
-void DigitalController::addCountCompletedFunctor(int pwm_index,
+void DigitalController::addCountCompletedFunctor(digital_controller::constants::PwmId pwm_id,
   const Functor1<int> & functor,
   int arg)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_infos_.indexHasValue(pwm_id.index))
   {
     return;
   }
-  constants::PwmInfo & pwm_info = pwm_infos_[pwm_index];
+  constants::PwmInfo & pwm_info = pwm_infos_[pwm_id.index];
   pwm_info.count_completed_functor = functor;
   pwm_info.functor_arg = arg;
 }
@@ -838,6 +838,19 @@ void DigitalController::stopAllPwm()
     stopPwm(i);
   }
   pwm_infos_.clear();
+  event_controller_.clearAllEvents();
+}
+
+void DigitalController::addEventUsingDelay(const Functor1<int> & functor,
+  uint32_t delay,
+  int arg)
+{
+  if (event_controller_.eventsAvailable() == 0)
+  {
+    return;
+  }
+  EventId event_id = event_controller_.addEventUsingDelay(functor,delay,arg);
+  event_controller_.enable(event_id);
 }
 
 double DigitalController::getPowerLowerBound(size_t channel)

@@ -97,12 +97,16 @@ public:
     RecursivePwmValues periods,
     RecursivePwmValues on_durations);
 
-  void addCountCompletedFunctor(int pwm_index,
+  void addCountCompletedFunctor(digital_controller::constants::PwmId pwm_id,
     const Functor1<int> & functor,
     int arg=-1);
 
   void stopPwm(digital_controller::constants::PwmId pwm_id);
   void stopAllPwm();
+
+  void addEventUsingDelay(const Functor1<int> & functor,
+    uint32_t delay,
+    int arg=-1);
 
 protected:
   EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
