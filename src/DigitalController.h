@@ -88,11 +88,25 @@ public:
   typedef Array<long,digital_controller::constants::PWM_LEVEL_COUNT_MAX> RecursivePwmValues;
 
   digital_controller::constants::PwmId addRecursivePwm(uint32_t channels,
+    double power,
     long delay,
     RecursivePwmValues periods,
     RecursivePwmValues on_durations,
     long count);
+
+  digital_controller::constants::PwmId addRecursivePwm(uint32_t channels,
+    double power,
+    long delay,
+    RecursivePwmValues periods,
+    RecursivePwmValues on_durations,
+    long count,
+    const Functor1<int> & start_pulse_functor,
+    const Functor1<int> & stop_pulse_functor,
+    const Functor1<int> & start_recursive_pwm_functor,
+    const Functor1<int> & stop_recursive_pwm_functor);
+
   digital_controller::constants::PwmId startRecursivePwm(uint32_t channels,
+    double power,
     long delay,
     RecursivePwmValues periods,
     RecursivePwmValues on_durations);
@@ -140,9 +154,9 @@ private:
   long channels_pwm_indexes_[digital_controller::constants::CHANNEL_COUNT_MAX][digital_controller::constants::PWM_LEVEL_COUNT_MAX];
 
   IndexedContainer<digital_controller::constants::PwmInfo,
-    digital_controller::constants::INDEXED_PWM_COUNT_MAX> pwm_infos_;
+    digital_controller::constants::INDEXED_PWM_COUNT_MAX> pwm_info_container_;
 
-  const Functor1<int> dummy_functor_;
+  Functor1<int> dummy_functor_;
 
   void stopPwm(int pwm_index);
 
@@ -164,6 +178,7 @@ private:
     size_t level);
 
   // Handlers
+  void dummyHandler(int dummy_arg);
   void setPowerMaxHandler(size_t channel);
 
   void allEnabledHandler();

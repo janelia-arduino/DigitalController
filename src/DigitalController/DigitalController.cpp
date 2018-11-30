@@ -21,6 +21,7 @@ void DigitalController::setup()
   // Variable Setup
   channels_ = 0;
   initializePwmIndexes();
+  dummy_functor_ = makeFunctor((Functor1<int> *)0,*this,&DigitalController::dummyHandler);
 
   // Event Controller Setup
   event_controller_.setup();
@@ -235,6 +236,7 @@ void DigitalController::setup()
   modular_server::Function & add_recursive_pwm_function = modular_server_.createFunction(constants::add_recursive_pwm_function_name);
   add_recursive_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::addRecursivePwmHandler));
   add_recursive_pwm_function.addParameter(channels_parameter);
+  add_recursive_pwm_function.addParameter(power_parameter);
   add_recursive_pwm_function.addParameter(delay_parameter);
   add_recursive_pwm_function.addParameter(periods_parameter);
   add_recursive_pwm_function.addParameter(on_durations_parameter);
@@ -244,6 +246,7 @@ void DigitalController::setup()
   modular_server::Function & start_recursive_pwm_function = modular_server_.createFunction(constants::start_recursive_pwm_function_name);
   start_recursive_pwm_function.attachFunctor(makeFunctor((Functor0 *)0,*this,&DigitalController::startRecursivePwmHandler));
   start_recursive_pwm_function.addParameter(channels_parameter);
+  start_recursive_pwm_function.addParameter(power_parameter);
   start_recursive_pwm_function.addParameter(delay_parameter);
   start_recursive_pwm_function.addParameter(periods_parameter);
   start_recursive_pwm_function.addParameter(on_durations_parameter);
@@ -664,7 +667,7 @@ digital_controller::constants::PwmId DigitalController::addPwm(uint32_t channels
   const Functor1<int> & stop_pwm_functor)
 {
   constants::PwmId pwm_id;
-  if (pwm_infos_.full() || (event_controller_.eventsAvailable() < 2))
+  if (pwm_info_container_.full() || (event_controller_.eventsAvailable() < 2))
   {
     pwm_id.index = constants::NO_PWM_AVAILABLE_INDEX;
     return pwm_id;
@@ -687,7 +690,7 @@ digital_controller::constants::PwmId DigitalController::addPwm(uint32_t channels
   pwm_info.stop_pulse_functor = stop_pulse_functor;
   pwm_info.start_pwm_functor = start_pwm_functor;
   pwm_info.stop_pwm_functor = stop_pwm_functor;
-  pwm_id.index = pwm_infos_.add(pwm_info);
+  pwm_id.index = pwm_info_container_.add(pwm_info);
   if (pwm_id.index < 0)
   {
     return pwm_id;
@@ -704,7 +707,7 @@ digital_controller::constants::PwmId DigitalController::addPwm(uint32_t channels
     makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmWrapperHandler));
   event_controller_.addStopFunctor(pwm_id.event_id_pair,
     makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmWrapperHandler));
-  pwm_infos_[pwm_id.index].event_id_pair = pwm_id.event_id_pair;
+  pwm_info_container_[pwm_id.index].event_id_pair = pwm_id.event_id_pair;
   event_controller_.enable(pwm_id.event_id_pair);
   return pwm_id;
 }
@@ -719,13 +722,37 @@ digital_controller::constants::PwmId DigitalController::startPwm(uint32_t channe
 }
 
 digital_controller::constants::PwmId DigitalController::addRecursivePwm(uint32_t channels,
+  double power,
   long delay,
   RecursivePwmValues periods,
   RecursivePwmValues on_durations,
   long count)
 {
+  return addRecursivePwm(channels,
+    power,
+    delay,
+    periods,
+    on_durations,
+    count,
+    makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPulseHandler),
+    makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPulseHandler),
+    dummy_functor_,
+    dummy_functor_);
+}
+
+digital_controller::constants::PwmId DigitalController::addRecursivePwm(uint32_t channels,
+  double power,
+  long delay,
+  RecursivePwmValues periods,
+  RecursivePwmValues on_durations,
+  long count,
+  const Functor1<int> & start_pulse_functor,
+  const Functor1<int> & stop_pulse_functor,
+  const Functor1<int> & start_recursive_pwm_functor,
+  const Functor1<int> & stop_recursive_pwm_functor)
+{
   constants::PwmId pwm_id;
-  if (pwm_infos_.full() || (event_controller_.eventsAvailable() < 2))
+  if (pwm_info_container_.full() || (event_controller_.eventsAvailable() < 2))
   {
     pwm_id.index = constants::NO_PWM_AVAILABLE_INDEX;
     return pwm_id;
@@ -753,24 +780,33 @@ digital_controller::constants::PwmId DigitalController::addRecursivePwm(uint32_t
     pwm_info.running = false;
     pwm_info.level = level;
     pwm_info.child_index = pwm_id.index;
+    pwm_info.power = power;
     pwm_info.period = periods[level];
     pwm_info.on_duration = on_durations[level];
-    if (level == (level_count - 1))
+    pwm_info.start_pulse_functor = dummy_functor_;
+    pwm_info.stop_pulse_functor = dummy_functor_;
+    pwm_info.start_pwm_functor = dummy_functor_;
+    pwm_info.stop_pwm_functor = dummy_functor_;
+    pwm_info.top_level = false;
+    pwm_info.delay = 0;
+    pwm_info.count = -1;
+    if (level == 0)
+    {
+      pwm_info.start_pulse_functor = start_pulse_functor;
+      pwm_info.stop_pulse_functor = stop_pulse_functor;
+    }
+    else if (level == (level_count - 1))
     {
       pwm_info.top_level = true;
       pwm_info.delay = delay;
       pwm_info.count = count;
-    }
-    else
-    {
-      pwm_info.top_level = false;
-      pwm_info.delay = 0;
-      pwm_info.count = -1;
+      pwm_info.start_pwm_functor = start_recursive_pwm_functor;
+      pwm_info.stop_pwm_functor = stop_recursive_pwm_functor;
     }
     pwm_info.stopped_before_count_completed = false;
     pwm_info.count_completed_functor = dummy_functor_;
     pwm_info.functor_arg = -1;
-    pwm_id.index = pwm_infos_.add(pwm_info);
+    pwm_id.index = pwm_info_container_.add(pwm_info);
   }
 
   if (pwm_id.index >= 0)
@@ -782,9 +818,9 @@ digital_controller::constants::PwmId DigitalController::addRecursivePwm(uint32_t
       pwm_info.on_duration,
       count,
       pwm_id.index);
-    event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmHandler));
-    event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmHandler));
-    pwm_infos_[pwm_id.index].event_id_pair = event_id_pair;
+    event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmWrapperHandler));
+    event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmWrapperHandler));
+    pwm_info_container_[pwm_id.index].event_id_pair = event_id_pair;
     event_controller_.enable(event_id_pair);
   }
 
@@ -792,33 +828,34 @@ digital_controller::constants::PwmId DigitalController::addRecursivePwm(uint32_t
 }
 
 digital_controller::constants::PwmId DigitalController::startRecursivePwm(uint32_t channels,
+  double power,
   long delay,
   RecursivePwmValues periods,
   RecursivePwmValues on_durations)
 {
-  return addRecursivePwm(channels,delay,periods,on_durations,-1);
+  return addRecursivePwm(channels,power,delay,periods,on_durations,-1);
 }
 
 void DigitalController::addCountCompletedFunctor(digital_controller::constants::PwmId pwm_id,
   const Functor1<int> & functor,
   int arg)
 {
-  if (!pwm_infos_.indexHasValue(pwm_id.index))
+  if (!pwm_info_container_.indexHasValue(pwm_id.index))
   {
     return;
   }
-  constants::PwmInfo & pwm_info = pwm_infos_[pwm_id.index];
+  constants::PwmInfo & pwm_info = pwm_info_container_[pwm_id.index];
   pwm_info.count_completed_functor = functor;
   pwm_info.functor_arg = arg;
 }
 
 void DigitalController::stopPwm(digital_controller::constants::PwmId pwm_id)
 {
-  if (!pwm_infos_.indexHasValue(pwm_id.index))
+  if (!pwm_info_container_.indexHasValue(pwm_id.index))
   {
     return;
   }
-  constants::PwmInfo & pwm_info = pwm_infos_[pwm_id.index];
+  constants::PwmInfo & pwm_info = pwm_info_container_[pwm_id.index];
   if  (pwm_id.event_id_pair != pwm_info.event_id_pair)
   {
     return;
@@ -837,7 +874,7 @@ void DigitalController::stopAllPwm()
   {
     stopPwm(i);
   }
-  pwm_infos_.clear();
+  pwm_info_container_.clear();
   event_controller_.clearAllEvents();
 }
 
@@ -931,11 +968,11 @@ void DigitalController::returnPwmIndexResponse(int pwm_index)
 
 void DigitalController::stopPwm(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
-  constants::PwmInfo & pwm_info = pwm_infos_[pwm_index];
+  constants::PwmInfo & pwm_info = pwm_info_container_[pwm_index];
   if (pwm_info.child_index >= 0)
   {
     stopPwm(pwm_info.child_index);
@@ -946,10 +983,10 @@ void DigitalController::stopPwm(int pwm_index)
 
 void DigitalController::removeParentAndChildrenPwmInfo(int pwm_index)
 {
-  if (pwm_infos_.indexHasValue(pwm_index))
+  if (pwm_info_container_.indexHasValue(pwm_index))
   {
-    removeParentAndChildrenPwmInfo(pwm_infos_[pwm_index].child_index);
-    pwm_infos_.remove(pwm_index);
+    removeParentAndChildrenPwmInfo(pwm_info_container_[pwm_index].child_index);
+    pwm_info_container_.remove(pwm_index);
   }
 }
 
@@ -1064,6 +1101,9 @@ void DigitalController::setChannelsPwmIndexesStopped(uint32_t channels,
 // modular_server_.property(property_name).setValue(value) value type must match the property default type
 // modular_server_.property(property_name).getElementValue(element_index,value) value type must match the property array element default type
 // modular_server_.property(property_name).setElementValue(element_index,value) value type must match the property array element default type
+
+void DigitalController::dummyHandler(int dummy_arg)
+{}
 
 void DigitalController::setChannelCountHandler()
 {
@@ -1377,6 +1417,8 @@ void DigitalController::addRecursivePwmHandler()
 {
   ArduinoJson::JsonArray * channels_array_ptr;
   modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
+  double power;
+  modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
   modular_server_.parameter(constants::delay_parameter_name).getValue(delay);
   ArduinoJson::JsonArray * periods_array_ptr;
@@ -1388,12 +1430,27 @@ void DigitalController::addRecursivePwmHandler()
   const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
   RecursivePwmValues periods = jsonArrayToRecursivePwmValues(*periods_array_ptr);
   RecursivePwmValues on_durations = jsonArrayToRecursivePwmValues(*on_durations_array_ptr);
-  constants::PwmId pwm_id = addRecursivePwm(channels,delay,periods,on_durations,count);
+  constants::PwmId pwm_id = addRecursivePwm(channels,power,delay,periods,on_durations,count);
   returnPwmIndexResponse(pwm_id.index);
 }
 
 void DigitalController::startRecursivePwmHandler()
 {
+  ArduinoJson::JsonArray * channels_array_ptr;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
+  double power;
+  modular_server_.parameter(constants::power_parameter_name).getValue(power);
+  long delay;
+  modular_server_.parameter(constants::delay_parameter_name).getValue(delay);
+  ArduinoJson::JsonArray * periods_array_ptr;
+  modular_server_.parameter(constants::periods_parameter_name).getValue(periods_array_ptr);
+  ArduinoJson::JsonArray * on_durations_array_ptr;
+  modular_server_.parameter(constants::on_durations_parameter_name).getValue(on_durations_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  RecursivePwmValues periods = jsonArrayToRecursivePwmValues(*periods_array_ptr);
+  RecursivePwmValues on_durations = jsonArrayToRecursivePwmValues(*on_durations_array_ptr);
+  constants::PwmId pwm_id = startRecursivePwm(channels,power,delay,periods,on_durations);
+  returnPwmIndexResponse(pwm_id.index);
 }
 
 void DigitalController::stopPwmHandler()
@@ -1434,7 +1491,7 @@ void DigitalController::getPwmInfoHandler()
 {
   noInterrupts();
   IndexedContainer<constants::PwmInfo,
-    constants::INDEXED_PWM_COUNT_MAX> indexed_pwm = pwm_infos_;
+    constants::INDEXED_PWM_COUNT_MAX> indexed_pwm = pwm_info_container_;
   interrupts();
 
   uint32_t bit = 1;
@@ -1463,6 +1520,7 @@ void DigitalController::getPwmInfoHandler()
       modular_server_.response().write(constants::level_string,pwm_info.level);
       modular_server_.response().write(constants::top_level_string,pwm_info.top_level);
       modular_server_.response().write(constants::child_index_string,pwm_info.child_index);
+      modular_server_.response().write(constants::power_parameter_name,pwm_info.power);
       modular_server_.response().write(constants::delay_parameter_name,pwm_info.delay);
       modular_server_.response().write(constants::period_parameter_name,pwm_info.period);
       modular_server_.response().write(constants::on_duration_parameter_name,pwm_info.on_duration);
@@ -1524,28 +1582,28 @@ void DigitalController::setAllChannelsOffHandler(modular_server::Pin * pin_ptr)
 
 void DigitalController::startPulseHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
-  uint32_t & channels = pwm_infos_[pwm_index].channels;
-  double power = pwm_infos_[pwm_index].power;
+  uint32_t & channels = pwm_info_container_[pwm_index].channels;
+  double power = pwm_info_container_[pwm_index].power;
   setChannelsOnAtPower(channels,power);
 }
 
 void DigitalController::stopPulseHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
-  uint32_t & channels = pwm_infos_[pwm_index].channels;
+  uint32_t & channels = pwm_info_container_[pwm_index].channels;
   setChannelsOff(channels);
 }
 
 void DigitalController::startPwmHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
@@ -1553,67 +1611,64 @@ void DigitalController::startPwmHandler(int pwm_index)
 
 void DigitalController::stopPwmHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
-  uint32_t & channels = pwm_infos_[pwm_index].channels;
+  uint32_t & channels = pwm_info_container_[pwm_index].channels;
   setChannelsOff(channels);
 }
 
 void DigitalController::startPulseWrapperHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
 
-  pwm_infos_[pwm_index].start_pulse_functor(pwm_index);
+  pwm_info_container_[pwm_index].start_pulse_functor(pwm_index);
 }
 
 void DigitalController::stopPulseWrapperHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
 
-  pwm_infos_[pwm_index].stop_pulse_functor(pwm_index);
+  pwm_info_container_[pwm_index].stop_pulse_functor(pwm_index);
 }
 
 void DigitalController::startPwmWrapperHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
-  uint32_t & channels = pwm_infos_[pwm_index].channels;
-  uint8_t & level = pwm_infos_[pwm_index].level;
+  uint32_t & channels = pwm_info_container_[pwm_index].channels;
+  uint8_t & level = pwm_info_container_[pwm_index].level;
 
   setChannelsPwmIndexesRunning(channels,level,pwm_index);
-  pwm_infos_[pwm_index].running = true;
+  pwm_info_container_[pwm_index].running = true;
 
-  pwm_infos_[pwm_index].start_pwm_functor(pwm_index);
+  pwm_info_container_[pwm_index].start_pwm_functor(pwm_index);
 }
 
 void DigitalController::stopPwmWrapperHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
-  constants::PwmInfo pwm_info = pwm_infos_[pwm_index];
+  constants::PwmInfo pwm_info = pwm_info_container_[pwm_index];
   uint32_t & channels = pwm_info.channels;
   uint8_t & level = pwm_info.level;
   bool stopped_before_count_completed = pwm_info.stopped_before_count_completed;
   Functor1<int> count_completed_functor = pwm_info.count_completed_functor;
   int functor_arg = pwm_info.functor_arg;
-  if (level == 0)
-  {
-    pwm_infos_[pwm_index].stop_pwm_functor(pwm_index);
-  }
+  pwm_info_container_[pwm_index].stop_pwm_functor(pwm_index);
   setChannelsPwmIndexesStopped(channels,level);
-  pwm_infos_[pwm_index].running = false;
+  pwm_info_container_[pwm_index].running = false;
   if (pwm_info.top_level)
   {
     removeParentAndChildrenPwmInfo(pwm_index);
@@ -1626,53 +1681,51 @@ void DigitalController::stopPwmWrapperHandler(int pwm_index)
 
 void DigitalController::startRecursivePwmHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
-  constants::PwmInfo pwm_info = pwm_infos_[pwm_index];
+  constants::PwmInfo pwm_info = pwm_info_container_[pwm_index];
   int child_index = pwm_info.child_index;
   if (pwm_info.level == 0)
   {
-    uint32_t channels = pwm_info.channels;
-    setChannelsOn(channels);
+    startPulseWrapperHandler(pwm_index);
   }
   else
   {
-    long delay = pwm_infos_[child_index].delay;
-    long period = pwm_infos_[child_index].period;
-    long on_duration = pwm_infos_[child_index].on_duration;
+    long delay = pwm_info_container_[child_index].delay;
+    long period = pwm_info_container_[child_index].period;
+    long on_duration = pwm_info_container_[child_index].on_duration;
     EventIdPair event_id_pair = event_controller_.addInfinitePwmUsingDelay(makeFunctor((Functor1<int> *)0,*this,&DigitalController::startRecursivePwmHandler),
       makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopRecursivePwmHandler),
       delay,
       period,
       on_duration,
       child_index);
-    event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmHandler));
-    event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmHandler));
-    pwm_infos_[child_index].event_id_pair = event_id_pair;
+    event_controller_.addStartFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::startPwmWrapperHandler));
+    event_controller_.addStopFunctor(event_id_pair,makeFunctor((Functor1<int> *)0,*this,&DigitalController::stopPwmWrapperHandler));
+    pwm_info_container_[child_index].event_id_pair = event_id_pair;
     event_controller_.enable(event_id_pair);
   }
 }
 
 void DigitalController::stopRecursivePwmHandler(int pwm_index)
 {
-  if (!pwm_infos_.indexHasValue(pwm_index))
+  if (!pwm_info_container_.indexHasValue(pwm_index))
   {
     return;
   }
-  constants::PwmInfo pwm_info = pwm_infos_[pwm_index];
+  constants::PwmInfo pwm_info = pwm_info_container_[pwm_index];
   if (pwm_info.level == 0)
   {
-    uint32_t channels = pwm_info.channels;
-    setChannelsOff(channels);
+    stopPulseWrapperHandler(pwm_index);
   }
   else
   {
     int child_index = pwm_info.child_index;
     if (child_index >= 0)
     {
-      event_controller_.remove(pwm_infos_[child_index].event_id_pair);
+      event_controller_.remove(pwm_info_container_[child_index].event_id_pair);
       stopRecursivePwmHandler(child_index);
     }
   }
