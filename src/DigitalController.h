@@ -122,6 +122,10 @@ public:
     uint32_t delay,
     int arg=-1);
 
+  bool pwmIndexHasValue(int pwm_index);
+  uint32_t getPwmChannels(int pwm_index);
+  double getPwmPower(int pwm_index);
+
 protected:
   EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
@@ -142,6 +146,11 @@ protected:
 
   // Handlers
   void setChannelCountHandler();
+
+  virtual void startPulseHandler(int pwm_index);
+  virtual void stopPulseHandler(int pwm_index);
+  virtual void startPwmHandler(int pwm_index);
+  virtual void stopPwmHandler(int pwm_index);
 
 private:
   modular_server::Property properties_[digital_controller::constants::PROPERTY_COUNT_MAX];
@@ -220,11 +229,6 @@ private:
   void toggleAllChannelsHandler(modular_server::Pin * pin_ptr);
   void setAllChannelsOnHandler(modular_server::Pin * pin_ptr);
   void setAllChannelsOffHandler(modular_server::Pin * pin_ptr);
-
-  void startPulseHandler(int pwm_index);
-  void stopPulseHandler(int pwm_index);
-  void startPwmHandler(int pwm_index);
-  void stopPwmHandler(int pwm_index);
 
   void startPulseWrapperHandler(int pwm_index);
   void stopPulseWrapperHandler(int pwm_index);
