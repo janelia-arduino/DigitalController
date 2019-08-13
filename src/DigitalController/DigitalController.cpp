@@ -82,7 +82,6 @@ void DigitalController::setup()
 
   modular_server::Parameter & count_parameter = modular_server_.createParameter(constants::count_parameter_name);
   count_parameter.setRange(constants::count_min,constants::count_max);
-  count_parameter.setUnits(constants::ms_units);
 
   modular_server::Parameter & pwm_index_parameter = modular_server_.createParameter(constants::pwm_index_parameter_name);
   pwm_index_parameter.setRange(constants::pwm_index_min,(long)constants::INDEXED_PWM_COUNT_MAX-1);
