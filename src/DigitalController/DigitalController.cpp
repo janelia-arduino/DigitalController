@@ -943,28 +943,22 @@ DigitalController::ChannelsPwmIndexes DigitalController::getChannelsPwmIndexes()
   return channels_pwm_indexes;
 }
 
-uint32_t DigitalController::jsonArrayToChannels(ArduinoJson::JsonArray & channels_array)
+uint32_t DigitalController::jsonArrayToChannels(ArduinoJson::JsonArray channels_array)
 {
   uint32_t channels = 0;
   uint32_t bit = 1;
-  for (ArduinoJson::JsonArray::iterator channels_it=channels_array.begin();
-       channels_it != channels_array.end();
-       ++channels_it)
+  for (long channel : channels_array)
   {
-    long channel = *channels_it;
     channels |= bit << channel;
   }
   return channels;
 }
 
-DigitalController::RecursivePwmValues DigitalController::jsonArrayToRecursivePwmValues(ArduinoJson::JsonArray & array)
+DigitalController::RecursivePwmValues DigitalController::jsonArrayToRecursivePwmValues(ArduinoJson::JsonArray array)
 {
   RecursivePwmValues pwm_values;
-  for (ArduinoJson::JsonArray::iterator array_it=array.begin();
-       array_it != array.end();
-       ++array_it)
+  for (long value : array)
   {
-    long value = *array_it;
     pwm_values.push_back(value);
   }
   return pwm_values;
@@ -1115,8 +1109,8 @@ void DigitalController::setChannelsPwmIndexesStopped(uint32_t channels,
 // floating-point number (float, double)
 // bool
 // const char *
-// ArduinoJson::JsonArray *
-// ArduinoJson::JsonObject *
+// ArduinoJson::JsonArray
+// ArduinoJson::JsonObject
 // const ConstantString *
 //
 // For more info read about ArduinoJson parsing https://github.com/janelia-arduino/ArduinoJson
@@ -1198,18 +1192,15 @@ void DigitalController::setPowerWhenOnHandler()
 
 void DigitalController::setPowersWhenOnHandler()
 {
-  ArduinoJson::JsonArray * powers_array_ptr;
-  modular_server_.parameter(constants::powers_parameter_name).getValue(powers_array_ptr);
+  ArduinoJson::JsonArray powers_array;
+  modular_server_.parameter(constants::powers_parameter_name).getValue(powers_array);
 
   modular_server_.response().writeResultKey();
   modular_server_.response().beginArray();
 
   size_t channel = 0;
-  for (ArduinoJson::JsonArray::iterator powers_it=powers_array_ptr->begin();
-       powers_it != powers_array_ptr->end();
-       ++powers_it)
+  for (double power : powers_array)
   {
-    double power = *powers_it;
     power = setPowerWhenOn(channel,power);
     modular_server_.response().write(power);
     ++channel;
@@ -1300,17 +1291,17 @@ void DigitalController::setChannelOffHandler()
 
 void DigitalController::setChannelsOnHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
   setChannelsOn(channels);
 }
 
 void DigitalController::setChannelsOnAtPowerHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
   size_t power;
   modular_server_.parameter(constants::power_parameter_name).getValue(power);
   setChannelsOnAtPower(channels,power);
@@ -1318,9 +1309,9 @@ void DigitalController::setChannelsOnAtPowerHandler()
 
 void DigitalController::setChannelsOffHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
   setChannelsOff(channels);
 }
 
@@ -1333,9 +1324,9 @@ void DigitalController::toggleChannelHandler()
 
 void DigitalController::toggleChannelsHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
   toggleChannels(channels);
 }
 
@@ -1363,17 +1354,17 @@ void DigitalController::setChannelOffAllOthersOnHandler()
 
 void DigitalController::setChannelsOnAllOthersOffHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
   setChannelsOnAllOthersOff(channels);
 }
 
 void DigitalController::setChannelsOffAllOthersOnHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
   setChannelsOffAllOthersOn(channels);
 }
 
@@ -1426,8 +1417,8 @@ void DigitalController::getChannelCountHandler()
 
 void DigitalController::addPwmHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
   double power;
   modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
@@ -1438,15 +1429,15 @@ void DigitalController::addPwmHandler()
   modular_server_.parameter(constants::on_duration_parameter_name).getValue(on_duration);
   long count;
   modular_server_.parameter(constants::count_parameter_name).getValue(count);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
   constants::PwmId pwm_id = addPwm(channels,power,delay,period,on_duration,count);
   returnPwmIndexResponse(pwm_id.index);
 }
 
 void DigitalController::startPwmHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
   double power;
   modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
@@ -1455,47 +1446,47 @@ void DigitalController::startPwmHandler()
   modular_server_.parameter(constants::period_parameter_name).getValue(period);
   long on_duration;
   modular_server_.parameter(constants::on_duration_parameter_name).getValue(on_duration);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
   constants::PwmId pwm_id = startPwm(channels,power,delay,period,on_duration);
   returnPwmIndexResponse(pwm_id.index);
 }
 
 void DigitalController::addRecursivePwmHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
   double power;
   modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
   modular_server_.parameter(constants::delay_parameter_name).getValue(delay);
-  ArduinoJson::JsonArray * periods_array_ptr;
-  modular_server_.parameter(constants::periods_parameter_name).getValue(periods_array_ptr);
-  ArduinoJson::JsonArray * on_durations_array_ptr;
-  modular_server_.parameter(constants::on_durations_parameter_name).getValue(on_durations_array_ptr);
+  ArduinoJson::JsonArray periods_array;
+  modular_server_.parameter(constants::periods_parameter_name).getValue(periods_array);
+  ArduinoJson::JsonArray on_durations_array;
+  modular_server_.parameter(constants::on_durations_parameter_name).getValue(on_durations_array);
   long count;
   modular_server_.parameter(constants::count_parameter_name).getValue(count);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
-  RecursivePwmValues periods = jsonArrayToRecursivePwmValues(*periods_array_ptr);
-  RecursivePwmValues on_durations = jsonArrayToRecursivePwmValues(*on_durations_array_ptr);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
+  RecursivePwmValues periods = jsonArrayToRecursivePwmValues(periods_array);
+  RecursivePwmValues on_durations = jsonArrayToRecursivePwmValues(on_durations_array);
   constants::PwmId pwm_id = addRecursivePwm(channels,power,delay,periods,on_durations,count);
   returnPwmIndexResponse(pwm_id.index);
 }
 
 void DigitalController::startRecursivePwmHandler()
 {
-  ArduinoJson::JsonArray * channels_array_ptr;
-  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array_ptr);
+  ArduinoJson::JsonArray channels_array;
+  modular_server_.parameter(constants::channels_parameter_name).getValue(channels_array);
   double power;
   modular_server_.parameter(constants::power_parameter_name).getValue(power);
   long delay;
   modular_server_.parameter(constants::delay_parameter_name).getValue(delay);
-  ArduinoJson::JsonArray * periods_array_ptr;
-  modular_server_.parameter(constants::periods_parameter_name).getValue(periods_array_ptr);
-  ArduinoJson::JsonArray * on_durations_array_ptr;
-  modular_server_.parameter(constants::on_durations_parameter_name).getValue(on_durations_array_ptr);
-  const uint32_t channels = jsonArrayToChannels(*channels_array_ptr);
-  RecursivePwmValues periods = jsonArrayToRecursivePwmValues(*periods_array_ptr);
-  RecursivePwmValues on_durations = jsonArrayToRecursivePwmValues(*on_durations_array_ptr);
+  ArduinoJson::JsonArray periods_array;
+  modular_server_.parameter(constants::periods_parameter_name).getValue(periods_array);
+  ArduinoJson::JsonArray on_durations_array;
+  modular_server_.parameter(constants::on_durations_parameter_name).getValue(on_durations_array);
+  const uint32_t channels = jsonArrayToChannels(channels_array);
+  RecursivePwmValues periods = jsonArrayToRecursivePwmValues(periods_array);
+  RecursivePwmValues on_durations = jsonArrayToRecursivePwmValues(on_durations_array);
   constants::PwmId pwm_id = startRecursivePwm(channels,power,delay,periods,on_durations);
   returnPwmIndexResponse(pwm_id.index);
 }

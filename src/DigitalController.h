@@ -139,8 +139,8 @@ protected:
   typedef Array<RecursivePwmValues,digital_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
   ChannelsPwmIndexes getChannelsPwmIndexes();
 
-  uint32_t jsonArrayToChannels(ArduinoJson::JsonArray & channels_array);
-  RecursivePwmValues jsonArrayToRecursivePwmValues(ArduinoJson::JsonArray & array);
+  uint32_t jsonArrayToChannels(ArduinoJson::JsonArray channels_array);
+  RecursivePwmValues jsonArrayToRecursivePwmValues(ArduinoJson::JsonArray array);
 
   void returnPwmIndexResponse(int pwm_index);
 
