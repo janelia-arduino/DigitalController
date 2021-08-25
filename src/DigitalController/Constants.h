@@ -175,6 +175,8 @@ extern ConstantString pwm_array_lengths_not_equal_error;
 extern ConstantString pwm_array_lengths_are_zero_error;
 }
 }
+#include "TEENSY40.h"
+#include "TEENSY41.h"
 #include "5x3.h"
 #include "3x2.h"
 #endif
