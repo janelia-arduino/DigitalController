@@ -26,49 +26,56 @@
 class DigitalController : public ModularDeviceBase
 {
 public:
+  typedef uint32_t Channels;
+  typedef size_t Channel;
+  typedef uint32_t Duration;
+  typedef size_t Level;
+  typedef int PwmIndex;
+  typedef size_t Power;
+
   virtual void setup();
 
   void enableAll();
   void disableAll();
   bool allEnabled();
 
-  double setPowerWhenOn(size_t channel,
+  double setPowerWhenOn(Channel channel,
     double power);
-  double setPowerWhenOnToMax(size_t channel);
+  double setPowerWhenOnToMax(Channel channel);
   void setAllPowersWhenOnToMax();
-  double getPowerWhenOn(size_t channel);
-  double getPower(size_t channel);
+  double getPowerWhenOn(Channel channel);
+  double getPower(Channel channel);
 
-  void setChannels(uint32_t channels);
-  void setChannelOn(size_t channel);
-  void setChannelOnAtPower(size_t channel,
+  void setChannels(Channels channels);
+  void setChannelOn(Channel channel);
+  void setChannelOnAtPower(Channel channel,
     double power);
-  void setChannelOff(size_t channel);
-  void setChannelsOn(uint32_t channels);
-  void setChannelsOnAtPower(uint32_t channels,
+  void setChannelOff(Channel channel);
+  void setChannelsOn(Channels channels);
+  void setChannelsOnAtPower(Channels channels,
     double power);
-  void setChannelsOff(uint32_t channels);
-  void toggleChannel(size_t channel);
-  void toggleChannels(uint32_t channels);
+  void setChannelsOff(Channels channels);
+  void toggleChannel(Channel channel);
+  void toggleChannels(Channels channels);
   void toggleAllChannels();
   void setAllChannelsOn();
   void setAllChannelsOnAtPower(double power);
   void setAllChannelsOff();
-  void setChannelOnAllOthersOff(size_t channel);
-  void setChannelOffAllOthersOn(size_t channel);
-  void setChannelsOnAllOthersOff(uint32_t channels);
-  void setChannelsOffAllOthersOn(uint32_t channels);
-  bool channelIsOn(size_t channel);
-  uint32_t getChannelsOn();
-  size_t getChannelCount();
+  void setChannelOnAllOthersOff(Channel channel);
+  void setChannelOffAllOthersOn(Channel channel);
+  void setChannelsOnAllOthersOff(Channels channels);
+  void setChannelsOffAllOthersOn(Channels channels);
+  bool channelIsOn(Channel channel);
+  Channels getChannelsOn();
+  Channel getChannelCount();
 
-  digital_controller::constants::PwmId addPwm(uint32_t channels,
+  digital_controller::constants::PwmId addPwm(Channels channels,
     double power,
     long delay,
     long period,
     long on_duration,
     long count);
-  digital_controller::constants::PwmId addPwm(uint32_t channels,
+  digital_controller::constants::PwmId addPwm(Channels channels,
     double power,
     long delay,
     long period,
@@ -79,7 +86,7 @@ public:
     const Functor1<int> & start_pwm_functor,
     const Functor1<int> & stop_pwm_functor);
 
-  digital_controller::constants::PwmId startPwm(uint32_t channels,
+  digital_controller::constants::PwmId startPwm(Channels channels,
     double power,
     long delay,
     long period,
@@ -87,14 +94,14 @@ public:
 
   typedef Array<long,digital_controller::constants::PWM_LEVEL_COUNT_MAX> RecursivePwmValues;
 
-  digital_controller::constants::PwmId addRecursivePwm(uint32_t channels,
+  digital_controller::constants::PwmId addRecursivePwm(Channels channels,
     double power,
     long delay,
     RecursivePwmValues periods,
     RecursivePwmValues on_durations,
     long count);
 
-  digital_controller::constants::PwmId addRecursivePwm(uint32_t channels,
+  digital_controller::constants::PwmId addRecursivePwm(Channels channels,
     double power,
     long delay,
     RecursivePwmValues periods,
@@ -105,7 +112,7 @@ public:
     const Functor1<int> & start_recursive_pwm_functor,
     const Functor1<int> & stop_recursive_pwm_functor);
 
-  digital_controller::constants::PwmId startRecursivePwm(uint32_t channels,
+  digital_controller::constants::PwmId startRecursivePwm(Channels channels,
     double power,
     long delay,
     RecursivePwmValues periods,
@@ -119,38 +126,38 @@ public:
   void stopAllPwm();
 
   void addEventUsingDelay(const Functor1<int> & functor,
-    uint32_t delay,
+    Duration delay,
     int arg=-1);
 
-  bool pwmIndexHasValue(int pwm_index);
-  uint32_t getPwmChannels(int pwm_index);
-  double getPwmPower(int pwm_index);
+  bool pwmIndexHasValue(PwmIndex pwm_index);
+  Channels getPwmChannels(PwmIndex pwm_index);
+  double getPwmPower(PwmIndex pwm_index);
 
 protected:
   EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
 
   Functor1<int> dummy_functor_;
 
-  virtual double getPowerLowerBound(size_t channel);
-  virtual double getPowerUpperBound(size_t channel);
-  virtual double setChannelToPower(size_t channel,
+  virtual double getPowerLowerBound(Channel channel);
+  virtual double getPowerUpperBound(Channel channel);
+  virtual double setChannelToPower(Channel channel,
     double power);
 
   typedef Array<RecursivePwmValues,digital_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
   ChannelsPwmIndexes getChannelsPwmIndexes();
 
-  uint32_t jsonArrayToChannels(ArduinoJson::JsonArray channels_array);
+  Channels jsonArrayToChannels(ArduinoJson::JsonArray channels_array);
   RecursivePwmValues jsonArrayToRecursivePwmValues(ArduinoJson::JsonArray array);
 
-  void returnPwmIndexResponse(int pwm_index);
+  void returnPwmIndexResponse(PwmIndex pwm_index);
 
   // Handlers
   void setChannelCountHandler();
 
-  virtual void startPulseHandler(int pwm_index);
-  virtual void stopPulseHandler(int pwm_index);
-  virtual void startPwmHandler(int pwm_index);
-  virtual void stopPwmHandler(int pwm_index);
+  virtual void startPulseHandler(PwmIndex pwm_index);
+  virtual void stopPulseHandler(PwmIndex pwm_index);
+  virtual void startPwmHandler(PwmIndex pwm_index);
+  virtual void stopPwmHandler(PwmIndex pwm_index);
 
 private:
   modular_server::Property properties_[digital_controller::constants::PROPERTY_COUNT_MAX];
@@ -159,7 +166,7 @@ private:
   modular_server::Callback callbacks_[digital_controller::constants::CALLBACK_COUNT_MAX];
 
   bool all_enabled_;
-  uint32_t channels_;
+  Channels channels_;
   double powers_when_on_[digital_controller::constants::CHANNEL_COUNT_MAX];
   double powers_[digital_controller::constants::CHANNEL_COUNT_MAX];
   long channels_pwm_indexes_[digital_controller::constants::CHANNEL_COUNT_MAX][digital_controller::constants::PWM_LEVEL_COUNT_MAX];
@@ -167,28 +174,28 @@ private:
   IndexedContainer<digital_controller::constants::PwmInfo,
     digital_controller::constants::INDEXED_PWM_COUNT_MAX> pwm_info_container_;
 
-  void stopPwm(int pwm_index);
+  void stopPwm(PwmIndex pwm_index);
 
-  void removeParentAndChildrenPwmInfo(int pwm_index);
+  void removeParentAndChildrenPwmInfo(PwmIndex pwm_index);
 
-  void updateChannel(size_t channel);
+  void updateChannel(Channel channel);
   void updateAllChannels();
 
   void initializePwmIndexes();
-  void setChannelPwmIndexesRunning(size_t channel,
-    size_t level,
-    int pwm_index);
-  void setChannelsPwmIndexesRunning(uint32_t channels,
-    size_t level,
-    int pwm_index);
-  void setChannelPwmIndexesStopped(size_t channel,
-    size_t level);
-  void setChannelsPwmIndexesStopped(uint32_t channels,
-    size_t level);
+  void setChannelPwmIndexesRunning(Channel channel,
+    Level level,
+    PwmIndex pwm_index);
+  void setChannelsPwmIndexesRunning(Channels channels,
+    Level level,
+    PwmIndex pwm_index);
+  void setChannelPwmIndexesStopped(Channel channel,
+    Level level);
+  void setChannelsPwmIndexesStopped(Channels channels,
+    Level level);
 
   // Handlers
   void dummyHandler(int dummy_arg);
-  void setPowerMaxHandler(size_t channel);
+  void setPowerMaxHandler(Channel channel);
 
   void allEnabledHandler();
   void setPowerWhenOnHandler();
@@ -230,13 +237,13 @@ private:
   void setAllChannelsOnHandler(modular_server::Pin * pin_ptr);
   void setAllChannelsOffHandler(modular_server::Pin * pin_ptr);
 
-  void startPulseWrapperHandler(int pwm_index);
-  void stopPulseWrapperHandler(int pwm_index);
-  void startPwmWrapperHandler(int pwm_index);
-  void stopPwmWrapperHandler(int pwm_index);
+  void startPulseWrapperHandler(PwmIndex pwm_index);
+  void stopPulseWrapperHandler(PwmIndex pwm_index);
+  void startPwmWrapperHandler(PwmIndex pwm_index);
+  void stopPwmWrapperHandler(PwmIndex pwm_index);
 
-  void startRecursivePwmHandler(int pwm_index);
-  void stopRecursivePwmHandler(int pwm_index);
+  void startRecursivePwmHandler(PwmIndex pwm_index);
+  void stopRecursivePwmHandler(PwmIndex pwm_index);
 };
 
 #endif

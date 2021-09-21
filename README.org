@@ -4,7 +4,7 @@
 
 * Library Information
   - Name :: DigitalController
-  - Version :: 3.1.0
+  - Version :: 3.1.1
   - License :: BSD
   - URL :: https://github.com/janelia-arduino/DigitalController
   - Author :: Peter Polidoro
