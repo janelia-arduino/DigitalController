@@ -930,6 +930,29 @@ double DigitalController::setChannelToPower(Channel channel,
   return constants::power_min;
 }
 
+void DigitalController::startPulseHandler(PwmIndex pwm_index)
+{
+  Channels channels = getPwmChannels(pwm_index);
+  double power = getPwmPower(pwm_index);
+  setChannelsOnAtPower(channels,power);
+}
+
+void DigitalController::stopPulseHandler(PwmIndex pwm_index)
+{
+  Channels channels = getPwmChannels(pwm_index);
+  setChannelsOff(channels);
+}
+
+void DigitalController::startPwmHandler(PwmIndex pwm_index)
+{
+}
+
+void DigitalController::stopPwmHandler(PwmIndex pwm_index)
+{
+  Channels channels = getPwmChannels(pwm_index);
+  setChannelsOff(channels);
+}
+
 DigitalController::ChannelsPwmIndexes DigitalController::getChannelsPwmIndexes()
 {
   ChannelsPwmIndexes channels_pwm_indexes;
@@ -1124,29 +1147,6 @@ void DigitalController::setChannelCountHandler()
   powers_parameter.setArrayLengthRange(channel_count,channel_count);
 
   setAllPowersWhenOnToMax();
-}
-
-void DigitalController::startPulseHandler(PwmIndex pwm_index)
-{
-  Channels channels = getPwmChannels(pwm_index);
-  double power = getPwmPower(pwm_index);
-  setChannelsOnAtPower(channels,power);
-}
-
-void DigitalController::stopPulseHandler(PwmIndex pwm_index)
-{
-  Channels channels = getPwmChannels(pwm_index);
-  setChannelsOff(channels);
-}
-
-void DigitalController::startPwmHandler(PwmIndex pwm_index)
-{
-}
-
-void DigitalController::stopPwmHandler(PwmIndex pwm_index)
-{
-  Channels channels = getPwmChannels(pwm_index);
-  setChannelsOff(channels);
 }
 
 void DigitalController::setPowerMaxHandler(Channel channel)

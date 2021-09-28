@@ -133,15 +133,21 @@ public:
   Channels getPwmChannels(PwmIndex pwm_index);
   double getPwmPower(PwmIndex pwm_index);
 
-protected:
-  EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
-
-  Functor1<int> dummy_functor_;
-
   virtual double getPowerLowerBound(Channel channel);
   virtual double getPowerUpperBound(Channel channel);
   virtual double setChannelToPower(Channel channel,
     double power);
+
+  // Handlers
+  virtual void startPulseHandler(PwmIndex pwm_index);
+  virtual void stopPulseHandler(PwmIndex pwm_index);
+  virtual void startPwmHandler(PwmIndex pwm_index);
+  virtual void stopPwmHandler(PwmIndex pwm_index);
+
+protected:
+  EventController<digital_controller::constants::EVENT_COUNT_MAX> event_controller_;
+
+  Functor1<int> dummy_functor_;
 
   typedef Array<RecursivePwmValues,digital_controller::constants::CHANNEL_COUNT_MAX> ChannelsPwmIndexes;
   ChannelsPwmIndexes getChannelsPwmIndexes();
@@ -153,11 +159,6 @@ protected:
 
   // Handlers
   void setChannelCountHandler();
-
-  virtual void startPulseHandler(PwmIndex pwm_index);
-  virtual void stopPulseHandler(PwmIndex pwm_index);
-  virtual void startPwmHandler(PwmIndex pwm_index);
-  virtual void stopPwmHandler(PwmIndex pwm_index);
 
 private:
   modular_server::Property properties_[digital_controller::constants::PROPERTY_COUNT_MAX];
